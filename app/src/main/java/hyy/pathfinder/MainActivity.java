@@ -11,6 +11,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.os.AsyncTask;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.w3c.dom.Text;
 
 import java.io.BufferedInputStream;
@@ -26,6 +28,7 @@ import java.net.URL;
 public class MainActivity extends AppCompatActivity {
 
     final int ACTIVITY_MAPS = 700;
+    JSONObject json;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,6 +76,43 @@ public class MainActivity extends AppCompatActivity {
 
         protected void onPostExecute(String response) {
 
+            //TextView tv = (TextView) findViewById(R.id.txtJSON);
+            //tv.setText(response);
+            try
+            {
+                json = new JSONObject(response);
+                TextView tvStartLatitude = (TextView) findViewById(R.id.txtStartLat);
+                TextView tvStartLongitude = (TextView) findViewById(R.id.txtStartLong);
+                TextView tvEndLatitude = (TextView) findViewById(R.id.txtEndLat);
+                TextView tvEndLongitude = (TextView) findViewById(R.id.txtEndLong);
+
+                JSONArray routesArray = json.getJSONArray("routes");
+                JSONObject routes = routesArray.getJSONObject(0);
+                JSONArray legsArray = routes.getJSONArray("legs");
+                JSONObject legs = legsArray.getJSONObject(0);
+
+                String endLocation = legs.getString("end_address");
+                JSONObject endLoc = legs.getJSONObject("end_location");
+                String endLatitude = endLoc.getString("lat");
+                String endLongitude = endLoc.getString("lng");
+
+                String startLocation = legs.getString("start_address");
+                JSONObject startLoc = legs.getJSONObject("start_location");
+                String startLatitude = startLoc.getString("lat");
+                String startLongitude = startLoc.getString("lng");
+
+                tvStartLatitude.setText(startLatitude);
+                tvStartLongitude.setText(startLongitude);
+                tvEndLatitude.setText(endLatitude);
+                tvEndLongitude.setText(endLongitude);
+
+            }
+            catch (Exception e)
+            {
+                TextView footer = (TextView) findViewById(R.id.txtFooter);
+                footer.setText(e.getMessage());
+            }
+
         }
     }
 
@@ -87,35 +127,17 @@ public class MainActivity extends AppCompatActivity {
 
             EditText etTo = (EditText) findViewById(R.id.etTo);
             String to = etTo.getText().toString();
-            String urlString = "https://maps.googleapis.com/maps/api/directions/json?origin=" + from + "&destination=" + to + "&key=AIzaSyABeFMjmwEa00fR4DwKg9U8Ty4kkXB6XFk";
-           // URL url = new URL(urlString);
+            String urlString = "https://maps.googleapis.com/maps/api/directions/json?origin=" + from + "&destination=" + to + "&key=" + getResources().getString(R.string.google_maps_key);
 
-            HttpHandler httphandler = new HttpHandler();
-            String data = httphandler.makeServiceCall(urlString);
-
-            TextView tv = (TextView) findViewById(R.id.txtJSON);
-            tv.setText(data);
+            FetchDataTask task = new FetchDataTask();
+            task.execute(urlString);
 
 
-            /*FetchDataTask task = new FetchDataTask();
-            task.execute(url);
-*/
-/*
-            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-            InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-
-
-            BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-            StringBuilder result = new StringBuilder();
-            String line;
-            while((line = reader.readLine()) != null) {
-                result.append(line);
-            }
-*/
         }
         catch (Exception ex)
         {
-            Toast.makeText(getApplicationContext(), ex.toString(), Toast.LENGTH_LONG).show();
+            TextView footer = (TextView) findViewById(R.id.txtFooter);
+            footer.setText(ex.getMessage());
         }
 
     }

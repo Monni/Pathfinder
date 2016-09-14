@@ -68,7 +68,33 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:text="New Text"
-            android:id="@+id/txtJSON"
+            android:id="@+id/txtStartLat"
+            android:layout_gravity="center_horizontal" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="New Text"
+            android:id="@+id/txtStartLong" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="New Text"
+            android:id="@+id/txtEndLat" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="New Text"
+            android:id="@+id/txtEndLong" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text=""
+            android:id="@+id/txtFooter"
             android:layout_gravity="center_horizontal" />
 
     </LinearLayout>
