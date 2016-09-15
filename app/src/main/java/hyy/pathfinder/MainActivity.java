@@ -1,5 +1,6 @@
 package hyy.pathfinder;
 
+import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
@@ -8,7 +9,11 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.RadioButton;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -22,11 +27,13 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private ArrayList<String> stationList = new ArrayList<>(); // For AutoCompleteTextView (Full station names only)
-    private List<String[]> stationData = new ArrayList<>(); // More complete data of current train stations (incl. Full name, ShortCode, Longitude and Latitude)
+    private List<String[]> stationData = new ArrayList<>(); // More complete data of current train stations (incl. Full name, ShortCode, Longitude and Latitude)+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,11 +43,47 @@ public class MainActivity extends AppCompatActivity {
         stationDataTask.execute("http://rata.digitraffic.fi/api/v1/metadata/stations.json"); // Get data from current train stations
 
         // AutoCompleteTextView for start and end locations
-        AutoCompleteTextView actv_start = (AutoCompleteTextView) findViewById(R.id.textfield_locStart);
-        AutoCompleteTextView actv_end = (AutoCompleteTextView) findViewById(R.id.textfield_locEnd);
+        AutoCompleteTextView actv_start = (AutoCompleteTextView) findViewById(R.id.locStart);
+        AutoCompleteTextView actv_end = (AutoCompleteTextView) findViewById(R.id.locEnd);
         ArrayAdapter<String> aa = new ArrayAdapter<>(this,android.R.layout.simple_dropdown_item_1line,stationList);
         actv_start.setAdapter(aa);
         actv_end.setAdapter(aa);
+
+        // Calendar for departure date and time, gets current system datetime
+        final Calendar calendar = Calendar.getInstance();
+        final int month = calendar.get(Calendar.MONTH);
+        final int day = calendar.get(Calendar.DAY_OF_MONTH);
+        final int year = calendar.get(Calendar.YEAR);
+        final int hours = calendar.get(Calendar.HOUR);
+        final int mins = calendar.get(Calendar.MINUTE);
+
+        // Create listener for "immediately" button. If checked, disable departure date
+        CompoundButton locStartImmediately = (Switch) findViewById(R.id.locStartImmediately);
+        locStartImmediately.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener()
+        {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked == true) {
+                    // Disable date, set current date
+                    findViewById(R.id.locStartDate).setEnabled(false);
+                    EditText date = (EditText) findViewById(R.id.locStartDate);
+                    date.setText(day +"."+ month +"."+ year);
+                    // Disable time, set current time
+                    findViewById(R.id.locStartTime).setEnabled(false);
+                    EditText time = (EditText) findViewById(R.id.locStartTime);
+                    time.setText(hours +":"+ mins);
+                }
+                else  {
+                    // Return control to date / EditText
+                    findViewById(R.id.locStartDate).setEnabled(true);
+                    EditText date = (EditText) findViewById(R.id.locStartDate);
+                    date.setHint("dd.mm.yyyy");
+                    // Return control to time / EditText
+                    findViewById(R.id.locStartDate).setEnabled(true);
+                    EditText time = (EditText) findViewById(R.id.locStartTime);
+                    time.setHint("hh:mm");
+                }
+            }
+        });
     }
 
     class FetchDataTask extends AsyncTask<String, Void, JSONArray> {
@@ -93,9 +136,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void find_route(View view) {
-        EditText locStart = (AutoCompleteTextView) findViewById(R.id.textfield_locStart);
+        EditText locStart = (AutoCompleteTextView) findViewById(R.id.locStart);
         String stationStartName = locStart.getText().toString();
-        EditText locEnd = (AutoCompleteTextView) findViewById(R.id.textfield_locEnd);
+        EditText locEnd = (AutoCompleteTextView) findViewById(R.id.locEnd);
         String stationEndName = locEnd.getText().toString();
 
         // Data for starting station (name, shortCode, longitude, latitude)

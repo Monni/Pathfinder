@@ -10,26 +10,55 @@
     tools:context="hyy.pathfinder.MainActivity">
 
     <AutoCompleteTextView
-        android:id="@+id/textfield_locStart"
+        android:id="@+id/locStart"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:hint="Lähtöpaikka"
         />
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inputType="date"
+        android:ems="10"
+        android:id="@+id/locStartDate"
+        android:layout_below="@+id/locStart"
+        android:layout_alignParentStart="true"
+        android:hint="dd.mm.yyyy"
+        />
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inputType="time"
+        android:ems="10"
+        android:id="@+id/locStartTime"
+        android:layout_below="@+id/locStartDate"
+        android:layout_alignRight="@id/locStartDate"
+        android:hint="hh:mm"
+        />
+    <Switch
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Heti"
+        android:id="@+id/locStartImmediately"
+        android:layout_Below="@id/locStart"
+        android:layout_alignTop="@+id/locStartDate"
+        android:layout_toEndOf="@+id/locStartDate"
+        />
     <AutoCompleteTextView
-        android:id="@+id/textfield_locEnd"
+        android:id="@+id/locEnd"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:hint="Kohdepaikka"
-        android:layout_below="@id/textfield_locStart"
+        android:layout_below="@id/locStartTime"
         />
     <Button
         android:id="@+id/find_route"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/textfield_locEnd"
+        android:layout_below="@id/locEnd"
         android:text="Hae reitti"
-        android:onClick="find_route"/>
-
+        android:onClick="find_route"
+        />
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -38,6 +67,10 @@
 
         android:layout_alignParentBottom="true"
         android:layout_alignParentStart="true" />
+
+
+
+
 
 
 </RelativeLayout>
