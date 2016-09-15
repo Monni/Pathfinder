@@ -10,18 +10,25 @@
     tools:context="hyy.pathfinder.MainActivity">
 
     <AutoCompleteTextView
-        android:id="@+id/start_field"
+        android:id="@+id/textfield_locStart"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:hint="Lähtöpaikka"
         />
     <AutoCompleteTextView
-        android:id="@+id/end_field"
+        android:id="@+id/textfield_locEnd"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:hint="Kohdepaikka"
-        android:layout_below="@id/start_field"
+        android:layout_below="@id/textfield_locStart"
         />
+    <Button
+        android:id="@+id/find_route"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/textfield_locEnd"
+        android:text="Hae reitti"
+        android:onClick="find_route"/>
 
     <TextView
         android:layout_width="wrap_content"
