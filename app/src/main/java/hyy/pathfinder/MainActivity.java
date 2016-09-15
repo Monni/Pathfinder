@@ -4,7 +4,6 @@ import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.TextView;
@@ -22,19 +21,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
-    private ArrayList<String> stationList_short = new ArrayList<>();
+    private ArrayList<String> stationList = new ArrayList<>(); // For AutoCompleteTextView (Full station names only)
+    private List<String[]> stationData = new ArrayList<>(); // More complete data of current train stations (incl. Full name, ShortCode, Longitude and Latitude)
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        FetchDataTask task = new FetchDataTask();
-        task.execute("http://rata.digitraffic.fi/api/v1/metadata/stations.json"); // Get current list of train stations
+        FetchDataTask stationDataTask = new FetchDataTask();
+        stationDataTask.execute("http://rata.digitraffic.fi/api/v1/metadata/stations.json"); // Get data from current train stations
 
         // AutoCompleteTextView for start and end locations
         AutoCompleteTextView actv_start = (AutoCompleteTextView) findViewById(R.id.start_field);
         AutoCompleteTextView actv_end = (AutoCompleteTextView) findViewById(R.id.end_field);
-        ArrayAdapter<String> aa = new ArrayAdapter<>(this,android.R.layout.simple_dropdown_item_1line,stationList_short);
+        ArrayAdapter<String> aa = new ArrayAdapter<>(this,android.R.layout.simple_dropdown_item_1line,stationList);
         actv_start.setAdapter(aa);
         actv_end.setAdapter(aa);
     }
@@ -46,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
             JSONArray json = null;
             try {
                 URL url = new URL(urls[0]);
-                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection = (HttpURLConnection) url.openConnection();   // Open connection to rata.digitraffic.fi
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
                 StringBuilder stringBuilder = new StringBuilder();
                 String line;
@@ -68,15 +68,13 @@ public class MainActivity extends AppCompatActivity {
 
         protected void onPostExecute(JSONArray json) {
             StringBuilder text = new StringBuilder("");
-            List<String[]> stationList = new ArrayList<>();
-
             try {
                   for (int i=0; i < json.length(); i++) {
                     JSONObject station = json.getJSONObject(i);
                       if (station.getString("passengerTraffic") == "true") {
                           // Add data to a two-dimensional array of passenger stations in Finland, including longitude and latitude
-                          stationList.add(new String[] {station.getString("stationName"), station.getString("longitude"), station.getString("latitude")});
-                          stationList_short.add(station.getString("stationName"));
+                          stationData.add(new String[] {station.getString("stationName"), station.getString("stationShortCode"), station.getString("longitude"), station.getString("latitude")});
+                          stationList.add(station.getString("stationName"));
                           text.append(station.getString("stationName") + "\n"); // Just for debug! not needed
                       }
                 }
@@ -84,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.e("JSON", "Error getting data.");
             }
 
-            String text2 = stationList.get(0)[0].toString(); // Just for debugging! shows wanted stations on screen
+            String text2 = stationData.get(0)[0].toString(); // Just for debugging! shows wanted stations on screen
             TextView textView = (TextView) findViewById(R.id.textView);
             textView.setText(text2);
 
