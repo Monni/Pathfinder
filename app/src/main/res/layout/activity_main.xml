@@ -40,7 +40,7 @@
         android:layout_height="wrap_content"
         android:text="Heti"
         android:id="@+id/locStartImmediately"
-        android:layout_Below="@id/locStart"
+        android:layout_below="@id/locStart"
         android:layout_alignTop="@+id/locStartDate"
         android:layout_toEndOf="@+id/locStartDate"
         />
