@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -30,7 +31,8 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
     private ArrayList<String> stationList = new ArrayList<>(); // For AutoCompleteTextView (Full station names only)
     private List<String[]> stationData = new ArrayList<>(); // More complete data of current train stations (incl. Full name, ShortCode, Longitude and Latitude)+
-
+    // Create DecimalFormat to force date and time into two digit format
+    private DecimalFormat doubleDigitFormat = new DecimalFormat("00");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,13 +48,15 @@ public class MainActivity extends AppCompatActivity {
         actv_start.setAdapter(aa);
         actv_end.setAdapter(aa);
 
+        // ------- DEV KLUP ------ need to figure out how to get current timezone. Not displaying time correctly
         // Calendar for departure date and time, gets current system datetime
         final Calendar calendar = Calendar.getInstance();
-        final int month = calendar.get(Calendar.MONTH);
+        final int month = calendar.get(Calendar.MONTH) + 1;
         final int day = calendar.get(Calendar.DAY_OF_MONTH);
         final int year = calendar.get(Calendar.YEAR);
-        final int hours = calendar.get(Calendar.HOUR);
-        final int mins = calendar.get(Calendar.MINUTE);
+     //   final int hours = Integer.valueOf(doubleDigitFormat.format(Double.valueOf(Calendar.HOUR_OF_DAY)));
+        final int hour = Integer.valueOf(doubleDigitFormat.format(Calendar.HOUR_OF_DAY));
+        final int minute = Integer.valueOf(doubleDigitFormat.format(Calendar.MINUTE));
 
         // Create listener for "immediately" button. If checked, disable departure date
         CompoundButton locStartImmediately = (Switch) findViewById(R.id.locStartImmediately);
@@ -67,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
                     // Disable time, set current time
                     findViewById(R.id.locStartTime).setEnabled(false);
                     EditText time = (EditText) findViewById(R.id.locStartTime);
-                    time.setText(hours +":"+ mins);
+                    time.setText(hour +":"+ minute);
                 }
                 else  {
                     // Return control to date / EditText
@@ -75,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
                     EditText date = (EditText) findViewById(R.id.locStartDate);
                     date.setHint("dd.mm.yyyy");
                     // Return control to time / EditText
-                    findViewById(R.id.locStartDate).setEnabled(true);
+                    findViewById(R.id.locStartTime).setEnabled(true);
                     EditText time = (EditText) findViewById(R.id.locStartTime);
                     time.setHint("hh:mm");
                 }
@@ -138,6 +142,22 @@ public class MainActivity extends AppCompatActivity {
         EditText locEnd = (AutoCompleteTextView) findViewById(R.id.locEnd);
         String stationEndName = locEnd.getText().toString();
 
+        // Convert departure date into suitable format (YYYY-MM-DD)
+        EditText locStartDate = (EditText) findViewById(R.id.locStartDate);
+        String[] startDateString = locStartDate.getText().toString().split("\\.");
+        String locStartDateConverted = "";
+        for (int i = startDateString.length; i > 0; i--) {
+            locStartDateConverted += doubleDigitFormat.format(Double.valueOf(startDateString[i-1]));
+            if (i-1 != 0) {
+                locStartDateConverted += "-";
+            }
+        }
+        // Get departure time (HH:MM)
+        String locStartTime = findViewById(R.id.locStartTime).toString();
+        // --------DEV-------- KLUP Check if user put time in correct format
+
+        //Toast.makeText(this,locStartDateConverted,Toast.LENGTH_LONG).show(); // JUST FOR DEBUGGING, NOT NEEDED
+
         // Data for starting station (name, shortCode, longitude, latitude)
         String stationStartShortCode = "";
         String stationStartLongitude = "";
@@ -149,7 +169,7 @@ public class MainActivity extends AppCompatActivity {
                     stationStartLatitude = stationData.get(i)[3];
                 }
             }
-        Toast.makeText(this,stationStartShortCode,Toast.LENGTH_SHORT).show();
+       // Toast.makeText(this,stationStartShortCode,Toast.LENGTH_SHORT).show(); // JUST FOR DEBUGGING. NOT NEEDED
 
         // Data for end station (name, shortCode, longitude, latitude)
         String stationEndShortCode = "";
@@ -168,6 +188,8 @@ public class MainActivity extends AppCompatActivity {
         intent_findroute.putExtra("StationStartShortCode",stationStartShortCode);
         intent_findroute.putExtra("StationStartLongitude",stationStartLongitude);
         intent_findroute.putExtra("StationStartLatitude",stationStartLatitude);
+        intent_findroute.putExtra("StationStartDate", locStartDateConverted);
+        intent_findroute.putExtra("StationStartTime", locStartTime);
         intent_findroute.putExtra("StationEndShortCode", stationEndShortCode);
         intent_findroute.putExtra("StationEndLongitude", stationEndLongitude);
         intent_findroute.putExtra("StationEndLatitude", stationEndLatitude);
