@@ -33,8 +33,8 @@ public class MainActivity extends AppCompatActivity {
         EditText etOrigin = (EditText) findViewById(R.id.etOrigin);
         EditText etDestination = (EditText) findViewById(R.id.etDestination);
 
-        String origin = (String) etOrigin.getText().toString();
-        String destination = (String) etDestination.getText().toString();
+        String origin = etOrigin.getText().toString();
+        String destination = etDestination.getText().toString();
 
         intent.putExtra("origin", origin);
         intent.putExtra("destination", destination);
