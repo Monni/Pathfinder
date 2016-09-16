@@ -20,6 +20,10 @@ import java.util.List;
 
 public class route_results extends AppCompatActivity {
     private List<String[]> trainData = new ArrayList<>();
+    private List<String[]> trainDataTimeTableDeparture = new ArrayList<>();
+    private List<String[]> trainDataTimeTableArrival = new ArrayList<>();
+    private String stationStartShortCode = "";
+    private String stationEndShortCode = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,11 +32,11 @@ public class route_results extends AppCompatActivity {
         // Get data from calling intent
         Bundle extras = getIntent().getExtras();
        // String test = extras.getString("test");
-        String stationStartShortCode = extras.getString("StationStartShortCode");
+        stationStartShortCode = extras.getString("StationStartShortCode");
         String stationStartLongitude = extras.getString("StationStartLongitude");
         String stationStartLatitude = extras.getString("StationStartLatitude");
         String stationStartDate = extras.getString("StationStartDate");
-        String stationEndShortCode = extras.getString("StationEndShortCode");
+        stationEndShortCode = extras.getString("StationEndShortCode");
         String stationEndLongitude = extras.getString("StationEndLongitude");
         String stationEndLatitude = extras.getString("StationEndLatitude");
 
@@ -87,26 +91,51 @@ public class route_results extends AppCompatActivity {
             // Find text block to put data
             TextView textView = (TextView) findViewById(R.id.result1);
             String text = "";
+            Bundle routeData = new Bundle();
             // ----------DEV--------- Get all trains from station (start-end)
             try {
                 for (int i=0; i < json.length(); i++) {
                     JSONObject train = json.getJSONObject(i);
+                    JSONArray timeTable = train.getJSONArray("timeTableRows");
+                    for (int y = 0; y < timeTable.length(); y++) {
+                        JSONObject tt = timeTable.getJSONObject(y);
+                        if (tt.getString("stationShortCode").equals(stationStartShortCode) && tt.getString("type").equals("DEPARTURE")) {
+                            trainDataTimeTableDeparture.add(new String[] { tt.getString("type"), tt.getString("commercialTrack"), tt.getString("scheduledTime")});
+                        } else if (tt.getString("stationShortCode").equals(stationEndShortCode) && tt.getString("type").equals("ARRIVAL")) {
+                            trainDataTimeTableArrival.add(new String[] { tt.getString("type"), tt.getString("commercialTrack"), tt.getString("scheduledTime")});
+                        }
+                    }
                     // Get trainNumber, departureDate, trainType
-                        trainData.add(new String[] {train.getString("trainNumber"), train.getString("departureDate"), train.getString("trainType")});
+                    trainData.add(new String[] {train.getString("trainNumber"), train.getString("departureDate"), train.getString("trainType")});
                 }
             } catch (Exception e) { // JSONException?
                 // If no straight trains found
                 textView.setText("No trains found!");
                 // --------DEV---------- KLUP now program should start looking for alternate routes (via stop/multiple stops)
             }
-
-        for (int i = 0; i < trainData.size(); i++) {
+            for (int i = 0; i < trainData.size(); i++) {
             for (int x = 0; x < 3; x++) {
-                text += trainData.get(i)[x] +" ";
+              //  text += trainData.get(i)[x] +" ";
             }
-            text += "\n";
-           // text += trainData.get(i)[0] +" "+ trainData.get(i)[1] +" "+ trainData.get(i)[2] +  "\n";
+                for (int a = 0; a < 3; a++) {
+                  //  text += trainDataTimeTableArrival.get(i)[a] +" ";
+                }
+                for (int d = 0; d < 3; d++) {
+                 //   text += trainDataTimeTableDeparture.get(i)[d] +" ";
+                }
+           // text += "\n";
         }
+            routeData.putString("trainNumber", trainData.get(0)[0]);
+            routeData.putString("trainType", trainData.get(0)[2]);
+            routeData.putString("depType", trainDataTimeTableDeparture.get(0)[0]);
+            routeData.putString("depTrack", trainDataTimeTableDeparture.get(0)[1]);
+            routeData.putString("depTime", trainDataTimeTableDeparture.get(0)[2]);
+            routeData.putString("arrType", trainDataTimeTableArrival.get(0)[0]);
+            routeData.putString("arrTrack", trainDataTimeTableArrival.get(0)[1]);
+            routeData.putString("arrTime", trainDataTimeTableArrival.get(0)[2]);
+            text = routeData.getString("trainType")+" "+routeData.getString("trainNumber")+"\n"
+                    +routeData.getString("depType")+" "+routeData.getString("depTrack")+" "+routeData.getString("depTime")+"\n"
+                    +routeData.getString("arrType")+" "+routeData.getString("arrTrack")+" "+routeData.getString("arrTime")+"\n"+"\n";
             textView.setText(text);
         }
     }
