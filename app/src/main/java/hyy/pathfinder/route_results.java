@@ -15,7 +15,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class route_results extends AppCompatActivity {
@@ -24,6 +27,9 @@ public class route_results extends AppCompatActivity {
     private List<String[]> trainDataTimeTableArrival = new ArrayList<>();
     private String stationStartShortCode = "";
     private String stationEndShortCode = "";
+    private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
+    private Date stationStartTime;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +42,11 @@ public class route_results extends AppCompatActivity {
         String stationStartLongitude = extras.getString("StationStartLongitude");
         String stationStartLatitude = extras.getString("StationStartLatitude");
         String stationStartDate = extras.getString("StationStartDate");
+        try {
+            stationStartTime = timeFormat.parse(extras.getString("StationStartTime"));
+        } catch (ParseException ex) {
+            // KLUP Time invalid
+        }
         stationEndShortCode = extras.getString("StationEndShortCode");
         String stationEndLongitude = extras.getString("StationEndLongitude");
         String stationEndLatitude = extras.getString("StationEndLatitude");
@@ -92,21 +103,37 @@ public class route_results extends AppCompatActivity {
             TextView textView = (TextView) findViewById(R.id.result1);
             String text = "";
             Bundle routeData = new Bundle();
+            String[] scheduledTimeTemp;
             // ----------DEV--------- Get all trains from station (start-end)
             try {
+                // First get all trains from current station to destination
                 for (int i=0; i < json.length(); i++) {
                     JSONObject train = json.getJSONObject(i);
                     JSONArray timeTable = train.getJSONArray("timeTableRows");
                     for (int y = 0; y < timeTable.length(); y++) {
                         JSONObject tt = timeTable.getJSONObject(y);
                         if (tt.getString("stationShortCode").equals(stationStartShortCode) && tt.getString("type").equals("DEPARTURE")) {
-                            trainDataTimeTableDeparture.add(new String[] { tt.getString("type"), tt.getString("commercialTrack"), tt.getString("scheduledTime")});
+                            // Split string "scheduledTime" into two different strings and convert to more user convenient format
+                            StringBuilder stringBuilder = new StringBuilder(tt.getString("scheduledTime"));
+                            stringBuilder.deleteCharAt(stringBuilder.length()-1);
+                            //scheduledTimeTemp = tt.getString("scheduledTime").split("T");
+                            trainDataTimeTableDeparture.add(new String[] { tt.getString("type"), tt.getString("commercialTrack"), stringBuilder.toString()});
                         } else if (tt.getString("stationShortCode").equals(stationEndShortCode) && tt.getString("type").equals("ARRIVAL")) {
                             trainDataTimeTableArrival.add(new String[] { tt.getString("type"), tt.getString("commercialTrack"), tt.getString("scheduledTime")});
                         }
                     }
-                    // Get trainNumber, departureDate, trainType
                     trainData.add(new String[] {train.getString("trainNumber"), train.getString("departureDate"), train.getString("trainType")});
+                }
+                // Next remove all trains before selected time of day
+                Date timetemp;
+                for (int i=0; i < trainData.size(); i++) {
+                    timetemp = timeFormat.parse(trainDataTimeTableDeparture.get(i)[2]);
+                if (timetemp.before(stationStartTime)) {
+                    trainData.remove(i);
+                    trainDataTimeTableDeparture.remove(i);
+                    trainDataTimeTableArrival.remove(i);
+                    i = 0;
+                }
                 }
             } catch (Exception e) { // JSONException?
                 // If no straight trains found

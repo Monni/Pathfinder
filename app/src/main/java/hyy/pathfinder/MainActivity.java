@@ -24,8 +24,11 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.DecimalFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -156,7 +159,6 @@ public class MainActivity extends AppCompatActivity {
         String locStartTime = findViewById(R.id.locStartTime).toString();
         // --------DEV-------- KLUP Check if user put time in correct format
 
-        //Toast.makeText(this,locStartDateConverted,Toast.LENGTH_LONG).show(); // JUST FOR DEBUGGING, NOT NEEDED
 
         // Data for starting station (name, shortCode, longitude, latitude)
         String stationStartShortCode = "";
@@ -169,9 +171,8 @@ public class MainActivity extends AppCompatActivity {
                     stationStartLatitude = stationData.get(i)[3];
                 }
             }
-       // Toast.makeText(this,stationStartShortCode,Toast.LENGTH_SHORT).show(); // JUST FOR DEBUGGING. NOT NEEDED
 
-        // Data for end station (name, shortCode, longitude, latitude)
+        // Data for end station (name, shortCode, longitude, latitude) ----- KLUP IS THIS NEEDED?
         String stationEndShortCode = "";
         String stationEndLongitude = "";
         String stationEndLatitude = "";
