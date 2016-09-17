@@ -57,9 +57,8 @@ public class MainActivity extends AppCompatActivity {
         final int month = calendar.get(Calendar.MONTH) + 1;
         final int day = calendar.get(Calendar.DAY_OF_MONTH);
         final int year = calendar.get(Calendar.YEAR);
-     //   final int hours = Integer.valueOf(doubleDigitFormat.format(Double.valueOf(Calendar.HOUR_OF_DAY)));
-        final int hour = Integer.valueOf(doubleDigitFormat.format(Calendar.HOUR_OF_DAY));
-        final int minute = Integer.valueOf(doubleDigitFormat.format(Calendar.MINUTE));
+        final int hour = Integer.valueOf(doubleDigitFormat.format(calendar.get(Calendar.HOUR_OF_DAY)));
+        final int minute = Integer.valueOf(doubleDigitFormat.format(calendar.get(Calendar.MINUTE)));
 
         // Create listener for "immediately" button. If checked, disable departure date
         CompoundButton locStartImmediately = (Switch) findViewById(R.id.locStartImmediately);
@@ -74,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
                     // Disable time, set current time
                     findViewById(R.id.locStartTime).setEnabled(false);
                     EditText time = (EditText) findViewById(R.id.locStartTime);
-                    time.setText(hour +":"+ minute);
+                    time.setText(doubleDigitFormat.format(hour) +":"+ doubleDigitFormat.format(minute));
                 }
                 else  {
                     // Return control to date / EditText
@@ -113,7 +112,6 @@ public class MainActivity extends AppCompatActivity {
             } finally {
                 if (urlConnection != null) urlConnection.disconnect();
             }
-
             return json;
         }
 
@@ -156,7 +154,8 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         // Get departure time (HH:MM)
-        String locStartTime = findViewById(R.id.locStartTime).toString();
+        EditText StartTime = (EditText) findViewById(R.id.locStartTime);
+        String locStartTime = StartTime.getText().toString();
         // --------DEV-------- KLUP Check if user put time in correct format
 
 
@@ -194,6 +193,7 @@ public class MainActivity extends AppCompatActivity {
         intent_findroute.putExtra("StationEndShortCode", stationEndShortCode);
         intent_findroute.putExtra("StationEndLongitude", stationEndLongitude);
         intent_findroute.putExtra("StationEndLatitude", stationEndLatitude);
+        Toast.makeText(this,locStartTime,Toast.LENGTH_LONG).show();
         startActivity(intent_findroute);
     }
 

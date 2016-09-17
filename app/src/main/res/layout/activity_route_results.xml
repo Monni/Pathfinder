@@ -32,6 +32,12 @@
                     />
 
             </TableRow>
+            <TableRow>
+                <TextView
+                    android:id="@+id/test"
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"/>
+            </TableRow>
 
 
 
