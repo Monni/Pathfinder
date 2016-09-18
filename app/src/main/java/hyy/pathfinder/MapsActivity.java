@@ -88,25 +88,45 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         extras = getIntent().getExtras();
         String originString = extras.getString("origin");
         String destinationString = extras.getString("destination");
-        String destination = URLEncoder.encode(destinationString);
-        String origin = URLEncoder.encode(originString);
-        String urlString = "https://maps.googleapis.com/maps/api/directions/json?origin=" + origin + "&destination=" + destination + "&key=" + getResources().getString(R.string.google_maps_key);
-        FetchUrl fetchUrl = new FetchUrl();
-        fetchUrl.execute(urlString);
+        String encodedDestination = URLEncoder.encode(destinationString);
+        boolean useMyLocation = extras.getBoolean("useMyLocation");
+        String origin;
+
+
 
         //Initialize Google Play Services
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Log.d("eka if", "eka if");
             if (ContextCompat.checkSelfPermission(this,
                     android.Manifest.permission.ACCESS_FINE_LOCATION)
                     == PackageManager.PERMISSION_GRANTED) {
                 buildGoogleApiClient();
                 mMap.setMyLocationEnabled(true);
+                Log.d("setmylocation","Setting mylocationenabled");
             }
         }
         else {
             buildGoogleApiClient();
             mMap.setMyLocationEnabled(true);
+            Log.d("setmylocation","Setting mylocationenabled");
         }
+
+        if(useMyLocation)
+        {
+            mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+            origin = String.valueOf(mLastLocation.getLatitude()) + "," + String.valueOf(mLastLocation.getLongitude());
+
+        }
+        else
+        {
+            origin = URLEncoder.encode(originString);
+        }
+
+        String urlString = "https://maps.googleapis.com/maps/api/directions/json?origin=" + origin + "&destination=" + encodedDestination + "&key=" + getResources().getString(R.string.google_maps_key);
+        Log.i("urlString", urlString);
+        FetchUrl fetchUrl = new FetchUrl();
+
+        fetchUrl.execute(urlString);
     }
 
     @Override
@@ -306,6 +326,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         @Override
         protected String doInBackground(String... url) {
 
+            Log.d("fetchUrl", "Fetching url, doInBackground");
             // For storing data from web service
             String data = "";
 
@@ -321,6 +342,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         @Override
         protected void onPostExecute(String result) {
+
+            Log.d("fetchUrl", "Fetching url, onPostExecute");
             super.onPostExecute(result);
 
             ParserTask parserTask = new ParserTask();

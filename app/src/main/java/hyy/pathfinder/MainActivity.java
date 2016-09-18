@@ -5,6 +5,7 @@ import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.CheckBox;
 import android.widget.EditText;
 
 import org.json.JSONObject;
@@ -32,14 +33,26 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, MapsActivity.class);
         EditText etOrigin = (EditText) findViewById(R.id.etOrigin);
         EditText etDestination = (EditText) findViewById(R.id.etDestination);
+        CheckBox cb = (CheckBox) findViewById(R.id.cbMyLoc);
+        String origin;
+        boolean useMyLocation = false;
 
-        String origin = etOrigin.getText().toString();
+        if(cb.isChecked())
+        {
+            origin = "my_location";
+            useMyLocation = true;
+        }
+        else {origin = etOrigin.getText().toString();}
+
         String destination = etDestination.getText().toString();
 
         intent.putExtra("origin", origin);
         intent.putExtra("destination", destination);
+        intent.putExtra("useMyLocation", useMyLocation);
 
         startActivity(intent);
     }
 
+
 }
+

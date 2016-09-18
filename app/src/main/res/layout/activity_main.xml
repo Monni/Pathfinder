@@ -28,6 +28,14 @@
             android:layout_alignEnd="@+id/linearLayout"
             android:layout_marginEnd="279dp" />
 
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Use my location"
+            android:id="@+id/cbMyLoc"
+            android:layout_gravity="right"
+            android:checked="false" />
+
         <EditText
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
