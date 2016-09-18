@@ -193,7 +193,6 @@ public class MainActivity extends AppCompatActivity {
         intent_findroute.putExtra("StationEndShortCode", stationEndShortCode);
         intent_findroute.putExtra("StationEndLongitude", stationEndLongitude);
         intent_findroute.putExtra("StationEndLatitude", stationEndLatitude);
-        Toast.makeText(this,locStartTime,Toast.LENGTH_LONG).show();
         startActivity(intent_findroute);
     }
 
