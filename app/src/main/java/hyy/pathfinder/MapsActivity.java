@@ -78,13 +78,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 == PackageManager.PERMISSION_GRANTED) {
             LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
         }
-    }
-
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
-        mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
-
+        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
         extras = getIntent().getExtras();
         String originString = extras.getString("origin");
         String destinationString = extras.getString("destination");
@@ -93,10 +87,31 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         String origin;
 
 
+        if(useMyLocation)
+        {
+            origin = String.valueOf(mLastLocation.getLatitude()) + "," + String.valueOf(mLastLocation.getLongitude());
+        }
+        else
+        {
+            origin = URLEncoder.encode(originString);
+        }
+
+        String urlString = "https://maps.googleapis.com/maps/api/directions/json?origin=" + origin + "&destination=" + encodedDestination + "&key=" + getResources().getString(R.string.google_maps_key);
+        Log.i("urlString", urlString);
+        FetchUrl fetchUrl = new FetchUrl();
+
+        fetchUrl.execute(urlString);
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+        mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+
+
 
         //Initialize Google Play Services
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            Log.d("eka if", "eka if");
             if (ContextCompat.checkSelfPermission(this,
                     android.Manifest.permission.ACCESS_FINE_LOCATION)
                     == PackageManager.PERMISSION_GRANTED) {
@@ -111,22 +126,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             Log.d("setmylocation","Setting mylocationenabled");
         }
 
-        if(useMyLocation)
-        {
-            mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-            origin = String.valueOf(mLastLocation.getLatitude()) + "," + String.valueOf(mLastLocation.getLongitude());
-
-        }
-        else
-        {
-            origin = URLEncoder.encode(originString);
-        }
-
-        String urlString = "https://maps.googleapis.com/maps/api/directions/json?origin=" + origin + "&destination=" + encodedDestination + "&key=" + getResources().getString(R.string.google_maps_key);
-        Log.i("urlString", urlString);
-        FetchUrl fetchUrl = new FetchUrl();
-
-        fetchUrl.execute(urlString);
     }
 
     @Override
