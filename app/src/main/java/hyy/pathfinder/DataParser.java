@@ -63,6 +63,41 @@ public class DataParser {
         return routes;
     }
 
+    public List<String> parseTotalDistanceAndDuration(JSONObject jObject)
+    {
+        List<String> list = new ArrayList<>();
+        JSONArray jaRoutes;
+        JSONArray jaLegs;
+        JSONObject oRoutes;
+        JSONObject oLegs;
+        JSONObject jDistance;
+        JSONObject jDuration;
+
+        try
+        {
+            jaRoutes = jObject.getJSONArray("routes");
+            oRoutes =  jaRoutes.getJSONObject(0);
+            jaLegs = oRoutes.getJSONArray("legs");
+            oLegs = jaLegs.getJSONObject(0);
+            jDistance = oLegs.getJSONObject("distance");
+            String distance = jDistance.getString("text");
+            jDuration = oLegs.getJSONObject("duration");
+            String duration = jDuration.getString("text");
+
+            list.add(distance);
+            list.add(duration);
+
+        }
+        catch (JSONException e)
+        {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+
+
 
     /**
      * Method to decode polyline points
