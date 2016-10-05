@@ -27,94 +27,42 @@ import java.util.List;
  */
 public class Router extends AsyncTask<String, Void, Void>
 {
-<<<<<<< HEAD
     private int mode;
     public AsyncResponse delegate = null;
     private List<String> list;
     private PolylineOptions polylineOptions;
 
     @Override
-    protected Void doInBackground(String... urlString)
-    {
-        try
-        {
+    protected Void doInBackground(String... urlString) {
+        try {
             FetchUrl fetchUrl = new FetchUrl();
             String jsonString = fetchUrl.downloadUrl(urlString[0]);
             JSONObject jObject = new JSONObject(jsonString);
             DataParser parser = new DataParser();
-            switch (mode)
-            {
+            switch (mode) {
                 case 1:
                     // halutaan vain etäisyys ja kesto
-                     list = parser.parseTotalDistanceAndDuration(jObject);
+                    list = parser.parseTotalDistanceAndDuration(jObject);
 
                     break;
                 case 2:
                     // halutaan piirretty reitti paikasta A paikkaan B
-                    List<List<HashMap<String,String>>> linelist = parser.parse(jObject);
+                    List<List<HashMap<String, String>>> linelist = parser.parse(jObject);
                     polylineOptions = getDrawnRoute(linelist);
                     break;
                 default:
                     throw new NullPointerException("No mode selected for Router");
-=======
-    List<String> sunData;
-
-    public void getTravelDistanceAndDuration(String originCoordinateString, String destinationCoordinateString)
-    {
-        String destination = URLEncoder.encode(destinationCoordinateString);
-        String origin = URLEncoder.encode(originCoordinateString);
-
-        String urlString = "https://maps.googleapis.com/maps/api/directions/json?origin=" + origin + "&destination=" + destination + "&key=" + getResources().getString(R.string.google_maps_key);
-        Log.i("urlString", urlString);
-        FetchUrl fetchUrl = new FetchUrl();
-        fetchUrl.execute(urlString);
-
-    }
-
-    private class ParserTask extends AsyncTask<String, Integer, List<String>> {
-
-        // Parsing the data in non-ui thread
-        @Override
-        protected List<String> doInBackground(String... jsonData) {
-
-            JSONObject jObject;
-            List<String> list = null;
-
-            try {
-
-                jObject = new JSONObject(jsonData[0]);
-                Log.d("ParserTask",jsonData[0].toString());
-                DataParser parser = new DataParser();
-                Log.d("ParserTask", parser.toString());
-
-                // Starts parsing data
-                list = parser.parseTotalDistanceAndDuration(jObject);
-
-
-            } catch (Exception e) {
-                Log.d("ParserTask",e.toString());
-                e.printStackTrace();
->>>>>>> origin/master
             }
         }
-<<<<<<< HEAD
         catch (IOException e)
         {
-            Log.d("Exception", e.toString());
+            Log.d("Background Task", e.toString());
         }
         catch (JSONException e)
         {
-            Log.d("Exception", e.toString());
+            Log.d("Background Task", e.toString());
         }
         return null;
-=======
-
-        @Override
-        protected void onPostExecute(List<String> result)
-        {
-            sunData = result;
-        }
->>>>>>> origin/master
     }
 
     @Override
@@ -182,7 +130,4 @@ public class Router extends AsyncTask<String, Void, Void>
         mode = 2;
         this.execute(urlString);
     }
-
-
-
 }
