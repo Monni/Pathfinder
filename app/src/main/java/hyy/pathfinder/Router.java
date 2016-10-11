@@ -11,13 +11,7 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -46,7 +40,7 @@ public class Router extends AsyncTask<String, Void, Void>
 
                     break;
                 case 2:
-                    // halutaan piirretty reitti paikasta A paikkaan B
+                    // halutaan piirretty reitti paikasta A paikkaan B kaikkine herkkuineen
                     List<List<HashMap<String, String>>> linelist = parser.parse(jObject);
                     polylineOptions = getDrawnRoute(linelist);
                     break;
