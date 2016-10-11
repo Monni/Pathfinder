@@ -168,7 +168,7 @@ public class MainActivity extends AppCompatActivity implements AsyncResponse {
         String originTime = StartTime.getText().toString();
 
 
-        Intent intent = new Intent(this, RouteFinder.class);
+        Intent intent = new Intent(this, RoutePresenter.class);
         EditText etOrigin = (EditText) findViewById(R.id.etOrigin);
         EditText etDestination = (EditText) findViewById(R.id.etDestination);
         Switch gpsSwitch = (Switch) findViewById(R.id.gpsSwitch);

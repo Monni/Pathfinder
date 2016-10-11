@@ -1,12 +1,31 @@
 package hyy.pathfinder;
 
 import android.app.ProgressDialog;
+import android.content.pm.PackageManager;
+import android.location.Geocoder;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.TextView;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.vision.barcode.Barcode;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -17,6 +36,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -28,19 +49,34 @@ import java.util.Locale;
  * Created by h4211 on 10/11/2016.
  */
 
-public class RouteFinder extends AppCompatActivity{
+public class RoutePresenter extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener, AsyncResponse{
+    public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
+    private LocationRequest mLocationRequest;
+    private GoogleApiClient mGoogleApiClient;
+    private Location mLastLocation;
+    private Marker mCurrLocationMarker;
     private List<String[]> trainData = new ArrayList<>();
     private List<String[]> trainDataTimeTableDeparture = new ArrayList<>();
     private List<String[]> trainDataTimeTableArrival = new ArrayList<>();
-    private String stationStartShortCode = "";
-    private String stationEndShortCode = "";
+//    private String stationStartShortCode = "";
+ //   private String stationEndShortCode = "";
+
+    // Data collected from calling intent (MainActivity)
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.ENGLISH);
-    private Date stationStartTime;
+    private String origin;
+    private Date originTime;
+    private String originDate;
+    private String destination;
+    private Boolean useMyLocation;
     private List<String[]> stationData = new ArrayList<>(); // get info from current stations. Name, shortCode, latitude and longitude
+
+    private ArrayList foundOriginStation;
+    private ArrayList foundDestinationStation;
+
 
     // Monitor AsyncTask status
     private boolean stationDataTaskFinished = false;
-    private boolean trainDataTaskFinished = false;
+    private boolean trainDataTaskFinished = true; // KLUP MUISTA VAIHTAA FALSEKSI
     private JSONArray trainJSON;
 
 
@@ -51,34 +87,38 @@ public class RouteFinder extends AppCompatActivity{
 
         // Get data from calling intent
         Bundle extras = getIntent().getExtras();
-        String stationStartLongitude = extras.getString("StationStart");
-        String stationStartLatitude = extras.getString("StationStartLatitude");
-        String stationStartDate = extras.getString("StationStartDate");
+        origin = extras.getString("origin"); // street address
+        originDate = extras.getString("originDate");
         try {
-            stationStartTime = timeFormat.parse(extras.getString("StationStartTime"));
-        } catch (Exception ex) {
-            // KLUP Time invalid
+            originTime = timeFormat.parse(extras.getString("originTime"));
+        } catch (ParseException e) {
+            e.printStackTrace();
         }
-        stationEndShortCode = extras.getString("StationEndShortCode");
-        String stationEndLongitude = extras.getString("StationEndLongitude");
-        String stationEndLatitude = extras.getString("StationEndLatitude");
+        destination = extras.getString("destination");
+        useMyLocation = extras.getBoolean("useMyLocation");
+
+
+        // build Google API client
+        buildGoogleApiClient();
+        mGoogleApiClient.connect();
 
 
         // Create and run needed AsyncTasks.
         Log.d("AyncTask called", "stationDataTask");
-        FetchStationDataTask stationDataTask = new FetchStationDataTask();
+        FetchStationDataTask stationDataTask = new FetchStationDataTask();   // Get station metadata
         stationDataTask.execute("http://rata.digitraffic.fi/api/v1/metadata/stations.json");
 
-        Log.d("AyncTask called", "trainDataTask");
-        FetchDataTask trainDataTask = new FetchDataTask();
-        trainDataTask.execute("http://rata.digitraffic.fi/api/v1/schedules?departure_station="
-                + stationStartShortCode + "&arrival_station=" + stationEndShortCode + "&departure_date=" + stationStartDate);
+      //  Log.d("AyncTask called", "trainDataTask");
+      //  FetchDataTask trainDataTask = new FetchDataTask();
+      //  trainDataTask.execute("http://rata.digitraffic.fi/api/v1/schedules?departure_station="
+      //          + stationStartShortCode + "&arrival_station=" + stationEndShortCode + "&departure_date=" + stationStartDate);
 
         Log.d("AyncTask called", "monitorDataTask");
         MonitorDataTask monitorDataTask = new MonitorDataTask();
         monitorDataTask.execute();
 
     }
+
 
     // MonitorDataTask monitors and waits until other AsyncTasks are ready, then magic happens
     class MonitorDataTask extends AsyncTask<Void, Void, Void> {
@@ -95,15 +135,36 @@ public class RouteFinder extends AppCompatActivity{
             return null;
         }
         protected void onPreExecute() {
-            progressDialog = ProgressDialog.show(RouteFinder.this, "Tekemistä", "Lasketaan ratapalkkeja", true);
+            progressDialog = ProgressDialog.show(RoutePresenter.this, "Tekemistä", "Lasketaan ratapalkkeja", true);
         }
-        // Main functions here
+        // MAGIC HAPPENS HERE
         protected void onPostExecute(Void result) {
             Log.d("AsyncTask finished", "MonitorDataTask");
-            progressDialog.dismiss();
             boolean directTrackConnectionFound = false;
-            directTrackConnectionFound = searchDirectTrackConnection(trainJSON);
-            findClosestStationFromPoint(65.5,45.5); // DESIRED LOCATION NEEDED!
+            progressDialog.dismiss();
+
+            Router router = new Router();
+            router.delegate = RoutePresenter.this;
+
+            if (useMyLocation) {
+                foundOriginStation = findClosestStationFromPoint(mLastLocation); // Find closest train station from origin
+                String originStationTemp = (foundOriginStation.get(1) +","+ foundOriginStation.get(2)); // Get Latitude and Longitude from found closest station and convert them into a string
+                Location destinationLocation = getLatLngFromAddress(destination); // Convert destination street address to latitude and longitude
+                foundDestinationStation = findClosestStationFromPoint(destinationLocation); // Find closest train station from destination
+                String originLocTemp = (mLastLocation.getLatitude() +","+ mLastLocation.getLongitude()); // Convert user location from Location to String
+                router.getTravelDistanceAndDuration(originLocTemp, originStationTemp, getBaseContext()); /* KLUP tää tieto pitäs tallentaa johonkin ja käyttää sitä searchDirectTrackConnectionissa plus-aikana?! */
+            } else {
+                Location mCustomLocation = getLatLngFromAddress(origin);
+                foundOriginStation = findClosestStationFromPoint(mCustomLocation);
+                String originStationTemp = (foundOriginStation.get(1) +","+ foundOriginStation.get(2));
+
+                router.getTravelDistanceAndDuration(origin, originStationTemp, getBaseContext());
+
+                Location destinationLocation = getLatLngFromAddress(destination);
+                foundDestinationStation = findClosestStationFromPoint(destinationLocation);
+            }
+
+
         }
     }
 
@@ -147,36 +208,7 @@ public class RouteFinder extends AppCompatActivity{
             Log.d("AsyncTask finished", "trainDataTask");
             trainJSON = json;
         }
-
-
-
-
-
     }
-
-
-    // Finds closest train station from given coordinates. Compares to every station within stationData List
-    private String findClosestStationFromPoint(Double latitude, Double longitude) {
-        Location pointOrigin = new Location("pointOrigin");
-        pointOrigin.setLatitude(latitude);
-        pointOrigin.setLongitude(longitude);
-        String closestStationName = "";
-        Float closestDist = 9999999999999999f;
-
-        for (int i = 0; i < stationData.size(); i++) {
-            Location pointDestination = new Location("pointDestination");
-            pointDestination.setLatitude(Double.parseDouble(stationData.get(i)[2]));
-            pointDestination.setLongitude(Double.parseDouble(stationData.get(i)[3]));
-            Float distTemp = pointOrigin.distanceTo(pointDestination);
-            if (distTemp < closestDist) {
-                closestDist = distTemp;
-                closestStationName = stationData.get(i)[0];
-            }
-        }
-        Log.d("Closest station", closestStationName);
-        return closestStationName;
-    }
-
 
 
     class FetchStationDataTask extends AsyncTask<String, Void, JSONArray> {
@@ -230,8 +262,176 @@ public class RouteFinder extends AppCompatActivity{
 
 
 
+
+
+
+    // Convert given street address into latitude and longitude
+    private Location getLatLngFromAddress(String strAddress) {
+        Geocoder geocoder = new Geocoder(this);
+        Location point = new Location("");
+        List<android.location.Address> address;
+        try {
+            address = geocoder.getFromLocationName(strAddress, 1);
+            if (address != null) {
+                android.location.Address location = address.get(0);
+
+                point.setLatitude(location.getLatitude());
+                point.setLongitude(location.getLongitude());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return point;
+    }
+
+    // Finds closest train station from given coordinates. Compares to every station within stationData List
+    private ArrayList<String> findClosestStationFromPoint(Location mLastLocation) {
+        ArrayList<String> closestStation = new ArrayList<>();
+        Location pointOrigin = new Location(mLastLocation);
+        String closestStationName = "";
+        Float closestDist = 9999999999999999f;
+
+        for (int i = 0; i < stationData.size(); i++) {
+            Location pointDestination = new Location("pointDestination");
+            pointDestination.setLatitude(Double.parseDouble(stationData.get(i)[2]));
+            pointDestination.setLongitude(Double.parseDouble(stationData.get(i)[3]));
+            Float distTemp = pointOrigin.distanceTo(pointDestination);
+            if (distTemp < closestDist) {
+                closestDist = distTemp;
+                closestStation.add(stationData.get(i)[1].toString());
+                closestStation.add(stationData.get(i)[2].toString());
+                closestStation.add(stationData.get(i)[3].toString());
+                closestStationName = stationData.get(i)[1];
+            }
+        }
+        Log.d("Closest station", closestStationName);
+        return closestStation;
+    }
+
+
+    @Override
+    public void getSpaceTimeFinish(List<String> data)
+    {
+
+   //     directTrackConnectionFound = searchDirectTrackConnection(trainJSON);
+  //      if (!directTrackConnectionFound) {
+            // Tee jotain jos  ei löydy suoraa reittiä
+    //    } else {
+            // Tee jotain muuta jos löytyy suora reitti
+
+  //      }
+    }
+    @Override
+    public void getRouteFinish(PolylineOptions data) {}
+    @Override
+    public void onLocationChanged(Location location){}
+
+    @Override
+    public void onConnected(Bundle bundle) {
+
+        createLocationRequest();
+        if(useMyLocation)
+        {
+            if (LocationPermissionAgent.isLocationEnabled(getBaseContext()))
+            {
+                // tutkittava myöhemmin paremman/tarkemman paikannuksen mahdollisuuksia
+               /* ProviderLocationTracker GpsProviderLocationTracker = new ProviderLocationTracker(getApplicationContext(), ProviderLocationTracker.ProviderType.GPS);
+                GpsProviderLocationTracker.start();*/
+
+                startLocationUpdates();
+                getLastLocation();
+                origin = String.valueOf(mLastLocation.getLatitude()) + "," + String.valueOf(mLastLocation.getLongitude());
+
+            //    findRoute(origin, destination); tarvitaanko?!
+            }
+            else
+            {
+                PermissionDialogFragment permissionDialogFragment = new PermissionDialogFragment();
+                permissionDialogFragment.show(getSupportFragmentManager(),"permissionRequest");
+            }
+        }
+        else
+        {
+            //findRoute(origin, destination); tarvitaanko?!
+        }
+    }
+
+    public void findRoute(String originString, String destinationString)
+    {
+        String destination = URLEncoder.encode(destinationString);
+        String origin = URLEncoder.encode(originString);
+        Router router = new Router();
+        router.delegate = this;
+        router.getRoute(origin, destination, getBaseContext());
+    }
+    protected void startLocationUpdates()
+    {
+        if (checkLocationPermission())
+        {
+            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+        }
+    }
+    protected void getLastLocation()
+    {
+        if(checkLocationPermission())
+        {
+            mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        }
+    }
+    public boolean checkLocationPermission(){
+        if (ContextCompat.checkSelfPermission(this,
+                android.Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            // Asking user if explanation is needed
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    android.Manifest.permission.ACCESS_FINE_LOCATION)) {
+                // Show an expanation to the user *asynchronously* -- don't block
+                // this thread waiting for the user's response! After the user
+                // sees the explanation, try again to request the permission.
+
+                //Prompt the user once explanation has been shown
+                ActivityCompat.requestPermissions(this,
+                        new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                        MY_PERMISSIONS_REQUEST_LOCATION);
+
+
+            } else {
+                // No explanation needed, we can request the permission.
+                ActivityCompat.requestPermissions(this,
+                        new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                        MY_PERMISSIONS_REQUEST_LOCATION);
+            }
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    protected void createLocationRequest() {
+        mLocationRequest = new LocationRequest();
+        mLocationRequest.setInterval(10000);
+        mLocationRequest.setFastestInterval(5000);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+    }
+
+    protected synchronized void buildGoogleApiClient() {
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
+    }
+    @Override
+    public void onConnectionSuspended(int i) {}
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {}
+
+
+
     protected boolean searchDirectTrackConnection(JSONArray json) {
-        // Find text block to put data, JUST FOR DEBUGGING. FINAL DATA DERIVED THROUGH BUNDLES!(?)
+   /*     // Find text block to put data, JUST FOR DEBUGGING. FINAL DATA DERIVED THROUGH BUNDLES!(?)
         TextView textView = (TextView) findViewById(R.id.result1);
         String text;
         Bundle routeData = new Bundle();
@@ -296,7 +496,7 @@ public class RouteFinder extends AppCompatActivity{
             while (i.hasNext()) {
                 String[] s = i.next();
                 timeTemp = timeFormat.parse(s[3]);
-                if (stationStartTime.after(timeTemp)) {
+                if (originTime.after(timeTemp)) {
                     // i.remove() removes trainDataTimeTableDeparture(0)
                     i.remove();
                     trainData.remove(0);
@@ -306,7 +506,7 @@ public class RouteFinder extends AppCompatActivity{
 
             /// ------- DEV ------ Null box. Use this to show data, debugging purposes
             TextView ruutu = (TextView) findViewById(R.id.test);
-            ruutu.setText("Set depTime: " + stationStartTime + "\n");
+            ruutu.setText("Set depTime: " + originTime + "\n");
 
 
         } catch (Exception e) { // JSONException?
@@ -337,7 +537,8 @@ public class RouteFinder extends AppCompatActivity{
         } else textView.setText("No direct trains today");
         Log.d("Function called", "Find closest station");
 
-        return directTrackConnectionFound;
+        return directTrackConnectionFound;*/
+        return false;
     }
 
 
