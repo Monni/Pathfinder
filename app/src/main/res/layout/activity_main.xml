@@ -76,6 +76,46 @@
             android:id="@+id/txtJSON"
             android:layout_gravity="center_horizontal" />
 
+
+
+        //miikalta
+        <EditText
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:inputType="date"
+            android:ems="10"
+            android:id="@+id/locStartDate"
+            android:layout_below="@+id/locStart"
+            android:layout_alignParentStart="true"
+            android:hint="Lähtöpäivä dd.mm.yyyy"
+            />
+        <EditText
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:inputType="time"
+            android:ems="10"
+            android:id="@+id/locStartTime"
+            android:layout_below="@+id/locStartDate"
+            android:layout_alignRight="@id/locStartDate"
+            android:hint="Lähtöaika hh:mm"
+            />
+        <Switch
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Heti"
+            android:id="@+id/locStartImmediately"
+            android:layout_below="@id/locStart"
+            android:layout_alignTop="@+id/locStartDate"
+            android:layout_toEndOf="@+id/locStartDate"
+            />
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Hae reitti"
+            android:onClick="test"
+            android:id="@+id/btnTest"
+            android:layout_gravity="center_horizontal" />
+
     </LinearLayout>
 
 </RelativeLayout>
