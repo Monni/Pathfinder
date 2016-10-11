@@ -58,6 +58,7 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
     private List<String[]> trainData = new ArrayList<>();
     private List<String[]> trainDataTimeTableDeparture = new ArrayList<>();
     private List<String[]> trainDataTimeTableArrival = new ArrayList<>();
+    private List<Route> routeList = new ArrayList<>();
 //    private String stationStartShortCode = "";
  //   private String stationEndShortCode = "";
 
@@ -257,14 +258,6 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
     }
 
 
-
-
-
-
-
-
-
-
     // Convert given street address into latitude and longitude
     private Location getLatLngFromAddress(String strAddress) {
         Geocoder geocoder = new Geocoder(this);
@@ -310,7 +303,7 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
 
 
     @Override
-    public void getSpaceTimeFinish(List<String> data)
+    public void getSpaceTimeFinish(List<String> data, int mode)
     {
 
    //     directTrackConnectionFound = searchDirectTrackConnection(trainJSON);
@@ -322,7 +315,9 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
   //      }
     }
     @Override
-    public void getRouteFinish(PolylineOptions data) {}
+    public void getRouteFinish(Route route, int mode) {
+        routeList.add(route);
+    }
     @Override
     public void onLocationChanged(Location location){}
 

@@ -25,7 +25,7 @@ public class MainActivity extends AppCompatActivity implements AsyncResponse {
     private DecimalFormat doubleDigitFormat = new DecimalFormat("00");
 
     @Override
-    public void getSpaceTimeFinish(List<String> output){
+    public void getSpaceTimeFinish(List<String> output, int mode){
         //Here you will receive the result fired from async class
         //of onPostExecute(result) method.
         TextView tv = (TextView) findViewById(R.id.txtJSON);
@@ -40,7 +40,7 @@ public class MainActivity extends AppCompatActivity implements AsyncResponse {
     }
 
     @Override
-    public void getRouteFinish(PolylineOptions polylineOptions){
+    public void getRouteFinish(Route route, int mode){
         //Here you will receive the result fired from async class
         //of onPostExecute(result) method.
 
@@ -71,7 +71,6 @@ public class MainActivity extends AppCompatActivity implements AsyncResponse {
                     EditText etOrigin = (EditText) findViewById(R.id.etOrigin);
                     etOrigin.setEnabled(true);
                 }
-
             }
         });
 

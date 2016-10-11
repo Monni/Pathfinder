@@ -86,13 +86,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     @Override
-    public void getRouteFinish(PolylineOptions data)
+    public void getRouteFinish(Route route, int mode)
     {
-        mMap.addPolyline(data);
+        mMap.addPolyline(route.polylineOptions);
     }
 
     @Override
-    public void getSpaceTimeFinish(List<String> data)
+    public void getSpaceTimeFinish(List<String> data, int mode)
     {
 
     }
@@ -101,6 +101,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onConnected(Bundle bundle) {
 
         createLocationRequest();
+
         String destination = extras.getString("destination");
         String origin;
         if(useMyLocation)
@@ -115,7 +116,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 getLastLocation();
                 origin = String.valueOf(mLastLocation.getLatitude()) + "," + String.valueOf(mLastLocation.getLongitude());
 
-                findRoute(origin, destination);
+                callRouter(origin, destination);
             }
             else
             {
@@ -126,11 +127,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         else
         {
             origin = extras.getString("origin");
-            findRoute(origin, destination);
+            callRouter(origin, destination);
         }
     }
 
-    public void findRoute(String originString, String destinationString)
+    private void callRouter(String originString, String destinationString)
     {
         String destination = URLEncoder.encode(destinationString);
         String origin = URLEncoder.encode(originString);

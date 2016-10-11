@@ -1,5 +1,7 @@
 package hyy.pathfinder;
 
+import android.location.Location;
+
 import com.google.android.gms.maps.model.LatLng;
 
 import org.json.JSONArray;
@@ -16,7 +18,7 @@ import java.util.List;
 public class DataParser {
 
     /** Receives a JSONObject and returns a list of lists containing latitude and longitude */
-    public List<List<HashMap<String,String>>> parse(JSONObject jObject){
+    public List<List<HashMap<String,String>>> parseLineList(JSONObject jObject){
 
         List<List<HashMap<String, String>>> routes = new ArrayList<>() ;
         JSONArray jRoutes;
@@ -63,6 +65,9 @@ public class DataParser {
         return routes;
     }
 
+
+
+
     public List<String> parseTotalDistanceAndDuration(JSONObject jObject)
     {
         List<String> list = new ArrayList<>();
@@ -94,6 +99,55 @@ public class DataParser {
         }
 
         return list;
+    }
+
+    public Route parseJsonToRoute(JSONObject jObject) throws JSONException
+    {
+        JSONArray jaRoutes;
+        JSONArray jaLegs;
+        JSONObject oLegs;
+        JSONObject jDistance;
+        JSONObject jDuration;
+        JSONObject jEndLocation;
+        JSONObject jStartLocation;
+        LatLng originLatLng;
+        LatLng destinationLatLng;
+        double endLocationLat;
+        double endLocationLng;
+        String endAddress;
+        double startLocationLat;
+        double startLocationLng;
+        String startAddress;
+
+        jaRoutes = jObject.getJSONArray("routes");
+
+        // get legs array
+        jaLegs =  jaRoutes.getJSONObject(0).getJSONArray("legs");
+        // get first object inside the array
+        oLegs = jaLegs.getJSONObject(0);
+
+        // get relevant data from legs-object
+        jDistance = oLegs.getJSONObject("distance");
+        Integer distance = jDistance.getInt("value");
+        jDuration = oLegs.getJSONObject("duration");
+        Integer duration = jDuration.getInt("value");
+
+        jEndLocation = oLegs.getJSONObject("end_location");
+        jStartLocation = oLegs.getJSONObject("start_location");
+
+        endAddress = oLegs.getString("end_address");
+        startAddress = oLegs.getString("start_address");
+
+        endLocationLat = jEndLocation.getDouble("lat");
+        endLocationLng = jEndLocation.getDouble("lng");
+        startLocationLat = jStartLocation.getDouble("lat");
+        startLocationLng = jStartLocation.getDouble("lng");
+
+        destinationLatLng = new LatLng(endLocationLat, endLocationLng);
+        originLatLng = new LatLng(startLocationLat, startLocationLng);
+
+        Route route = new Route(originLatLng, destinationLatLng, startAddress, endAddress, distance, duration);
+        return route;
     }
 
 

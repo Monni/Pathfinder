@@ -31,6 +31,7 @@ public class Router extends AsyncTask<String, Void, Void>
     public AsyncResponse delegate = null;
     private List<String> list;
     private PolylineOptions polylineOptions;
+    private Route route;
 
     @Override
     protected Void doInBackground(String... urlString) {
@@ -47,8 +48,12 @@ public class Router extends AsyncTask<String, Void, Void>
                     break;
                 case 2:
                     // halutaan piirretty reitti paikasta A paikkaan B
-                    List<List<HashMap<String, String>>> linelist = parser.parse(jObject);
+                    List<List<HashMap<String, String>>> linelist = parser.parseLineList(jObject);
+                    route = parser.parseJsonToRoute(jObject);
                     polylineOptions = getDrawnRoute(linelist);
+                    route.polylineOptions = polylineOptions;
+
+
                     break;
                 default:
                     throw new NullPointerException("No mode selected for Router");
@@ -72,11 +77,11 @@ public class Router extends AsyncTask<String, Void, Void>
         {
             case 1:
                 // halutaan vain etäisyys ja kesto
-                delegate.getSpaceTimeFinish(list);
+                delegate.getSpaceTimeFinish(list, mode);
                 break;
             case 2:
                 // halutaan piirretty reitti paikasta A paikkaan B
-                delegate.getRouteFinish(polylineOptions);
+                delegate.getRouteFinish(route, mode);
                 break;
             default:
                 throw new NullPointerException("No mode selected for Router");
