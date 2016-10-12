@@ -129,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public void test(View view)
+    public void btnRoute_clicked(View view)
     {
         // Convert departure date into suitable format (YYYY-MM-DD)
         EditText locStartDate = (EditText) findViewById(R.id.locStartDate);

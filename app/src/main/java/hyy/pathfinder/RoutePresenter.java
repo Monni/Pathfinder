@@ -78,7 +78,7 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
 
     // Monitor AsyncTask status
     private boolean stationDataTaskFinished = false;
-    private boolean trainDataTaskFinished = true; // KLUP MUISTA VAIHTAA FALSEKSI
+    private boolean trainDataTaskFinished = false;
     private JSONArray trainJSON;
 
 
@@ -110,30 +110,53 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
         FetchStationDataTask stationDataTask = new FetchStationDataTask();   // Get station metadata
         stationDataTask.execute("http://rata.digitraffic.fi/api/v1/metadata/stations.json");
 
-      //  Log.d("AyncTask called", "trainDataTask");
-      //  FetchDataTask trainDataTask = new FetchDataTask();
-      //  trainDataTask.execute("http://rata.digitraffic.fi/api/v1/schedules?departure_station="
-      //          + stationStartShortCode + "&arrival_station=" + stationEndShortCode + "&departure_date=" + stationStartDate);
+
+       // KLUP pitääkö tää kutsua vasta kun lähin asema löydetty? no pitäähän se. (shortcodeja ei muuten tiijä, eli stationdatatask oltava ajettuna
+     /*   Log.d("AyncTask called", "trainDataTask");
+        FetchDataTask trainDataTask = new FetchDataTask();
+        trainDataTask.execute("http://rata.digitraffic.fi/api/v1/schedules?departure_station="
+                + stationStartShortCode + "&arrival_station=" + stationEndShortCode + "&departure_date=" + stationStartDate);*/
 
         Log.d("AyncTask called", "monitorDataTask");
-        MonitorDataTask monitorDataTask = new MonitorDataTask();
-        monitorDataTask.execute();
-
+        MonitorTask monitorTask = new MonitorTask();
+        monitorTask.execute();
     }
 
 
     // MonitorDataTask monitors and waits until other AsyncTasks are ready, then magic happens
-    class MonitorDataTask extends AsyncTask<Void, Void, Void> {
+    class MonitorTask extends AsyncTask<Void, Void, Void> {
         ProgressDialog progressDialog;
         @Override
         protected Void doInBackground(Void... params) {
-            while (stationDataTaskFinished == false && trainDataTaskFinished == false) {
+            while (!stationDataTaskFinished) {
                 try {
                     Thread.sleep(250);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
+            findClosestStations(); // Find closest stations from origin and destination after stationDataTask finishes
+
+            // Start another AsyncTask within Asynctask but on the main thread
+            RoutePresenter.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Log.d("AyncTask called", "trainDataTask");
+                    FetchTrainDataTask trainDataTask = new FetchTrainDataTask();
+                    trainDataTask.execute("http://rata.digitraffic.fi/api/v1/schedules?departure_station="
+                            + foundOriginStation.get(0) + "&arrival_station=" + foundDestinationStation.get(0) + "&departure_date=" + originDate); // KLUP is originDate in correct format??!?!
+                }
+            });
+
+            while (!trainDataTaskFinished) {
+                try {
+                    Thread.sleep(250);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            //findRoutes(); // Called after other AsyncTasks are ready and main thingys run here! ////////////
+
             return null;
         }
         protected void onPreExecute() {
@@ -142,35 +165,13 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
         // MAGIC HAPPENS HERE
         protected void onPostExecute(Void result) {
             Log.d("AsyncTask finished", "MonitorDataTask");
-            boolean directTrackConnectionFound = false;
+           // boolean directTrackConnectionFound = false;
             progressDialog.dismiss();
-
-            Router router = new Router();
-            router.delegate = RoutePresenter.this;
-
-            if (useMyLocation) {
-                foundOriginStation = findClosestStationFromPoint(mLastLocation); // Find closest train station from origin
-                String originStationTemp = (foundOriginStation.get(1) +","+ foundOriginStation.get(2)); // Get Latitude and Longitude from found closest station and convert them into a string
-                Location destinationLocation = getLatLngFromAddress(destination); // Convert destination street address to latitude and longitude
-                foundDestinationStation = findClosestStationFromPoint(destinationLocation); // Find closest train station from destination
-                String originLocTemp = (mLastLocation.getLatitude() +","+ mLastLocation.getLongitude()); // Convert user location from Location to String
-                router.getTravelDistanceAndDuration(originLocTemp, originStationTemp, getBaseContext()); /* KLUP tää tieto pitäs tallentaa johonkin ja käyttää sitä searchDirectTrackConnectionissa plus-aikana?! */
-            } else {
-                Location mCustomLocation = getLatLngFromAddress(origin);
-                foundOriginStation = findClosestStationFromPoint(mCustomLocation);
-                String originStationTemp = (foundOriginStation.get(1) +","+ foundOriginStation.get(2));
-
-                router.getTravelDistanceAndDuration(origin, originStationTemp, getBaseContext());
-
-                Location destinationLocation = getLatLngFromAddress(destination);
-                foundDestinationStation = findClosestStationFromPoint(destinationLocation);
-            }
         }
     }
 
 
-
-    class FetchDataTask extends AsyncTask<String, Void, JSONArray> {
+    class FetchTrainDataTask extends AsyncTask<String, Void, JSONArray> {
         @Override
         protected JSONArray doInBackground(String... urls) {
             HttpURLConnection urlConnection = null;
@@ -195,13 +196,10 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
             }
             return json;
         }
-
         protected void onPreExecute() {
-            // Search for station locations here and compare to user input(location) here, to find closest one
+            // Search for station locations here and compare to user input(location) here, to find closest one???
         }
-
         protected void onPostExecute(JSONArray json) {
-
             //      boolean directTrackConnectionFound = false;
             //          directTrackConnectionFound = searchDirectTrackConnection(json);
             trainDataTaskFinished = true;
@@ -238,7 +236,6 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
         }
 
         protected void onPostExecute(JSONArray json) {
-            StringBuilder text = new StringBuilder("");
             try {
                 for (int i=0; i < json.length(); i++) {
                     JSONObject station = json.getJSONObject(i);
@@ -248,17 +245,39 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
                     }
                 }
             } catch (JSONException e) {
-                Log.d("JSON", "Error getting data.");
+                e.printStackTrace();
             }
             stationDataTaskFinished = true;
             Log.d("AsyncTask finished", "stationDataTask");
-            //           findClosestStationFromPoint(65.5,45.5); // DESIRED LOCATION NEEDED!
         }
     }
 
 
+// Here happens the main thingys
+    private void findClosestStations() {
+        Router router = new Router();
+        router.delegate = RoutePresenter.this;
+
+        if (useMyLocation) {
+            ArrayList foundOriginStation = findClosestStationFromPoint(mLastLocation); // Find closest train station from origin
+            String originStationLocation = (foundOriginStation.get(1) +","+ foundOriginStation.get(2)); // Get Latitude and Longitude from found closest station and convert into a string
+            String originLocTemp = (mLastLocation.getLatitude() +","+ mLastLocation.getLongitude()); // Convert user location from Location to String
+            /* KLUP tää alempi tieto pitäs tallentaa johonkin ja käyttää sitä searchDirectTrackConnectionissa plus-aikana?! */
+            router.getTravelDistanceAndDuration(originLocTemp, originStationLocation, getBaseContext()); // Get dist&dur from user location to closest station
+        } else {
+            Location mCustomLocation = getLocationFromAddress(origin); // Convert given address to Location (lat&long)
+            ArrayList foundOriginStation = findClosestStationFromPoint(mCustomLocation); // Find closest train station from converted Location
+            String originStationLocation = (foundOriginStation.get(1) +","+ foundOriginStation.get(2)); // Get Latitude and Longitude from found closest station and convert into a string
+            /* KLUP tää alempi tieto pitäs tallentaa johonkin ja käyttää sitä searchDirectTrackConnectionissa plus-aikana?! */
+            router.getTravelDistanceAndDuration(origin, originStationLocation, getBaseContext()); // Get dist&dur from given location to closest station KLUP!!! Tarviiko origin vaihtaa lat&long-stringiksi?
+        }
+        Location destinationLocation = getLocationFromAddress(destination); // Convert given destination address to Location (lat&long)
+        foundDestinationStation = findClosestStationFromPoint(destinationLocation); // Find closest train station from destination
+    }
+
+
     // Convert given street address into latitude and longitude
-    private Location getLatLngFromAddress(String strAddress) {
+    private Location getLocationFromAddress(String strAddress) {
         Geocoder geocoder = new Geocoder(this);
         Location point = new Location("");
         List<android.location.Address> address;
@@ -266,7 +285,6 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
             address = geocoder.getFromLocationName(strAddress, 1);
             if (address != null) {
                 android.location.Address location = address.get(0);
-
                 point.setLatitude(location.getLatitude());
                 point.setLongitude(location.getLongitude());
             }
@@ -275,6 +293,7 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
         }
         return point;
     }
+
 
     // Finds closest train station from given coordinates. Compares to every station within stationData List
     private ArrayList<String> findClosestStationFromPoint(Location mLastLocation) {
@@ -313,6 +332,8 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
 
   //      }
     }
+
+
     @Override
     public void getRouteFinish(Route route) {
         // jos route on koko reitin ensimmäinen pätkä, niin lisätään uusi lista routesiin ja laitetaan uuteen listaan route
@@ -330,12 +351,14 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
         }
         pendingRoutes--;
     }
+
+
     @Override
     public void onLocationChanged(Location location){}
 
+
     @Override
     public void onConnected(Bundle bundle) {
-
         createLocationRequest();
         if(useMyLocation)
         {
@@ -344,11 +367,9 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
                 // tutkittava myöhemmin paremman/tarkemman paikannuksen mahdollisuuksia
                /* ProviderLocationTracker GpsProviderLocationTracker = new ProviderLocationTracker(getApplicationContext(), ProviderLocationTracker.ProviderType.GPS);
                 GpsProviderLocationTracker.start();*/
-
                 startLocationUpdates();
                 getLastLocation();
                 origin = String.valueOf(mLastLocation.getLatitude()) + "," + String.valueOf(mLastLocation.getLongitude());
-
             //    findRoute(origin, destination); tarvitaanko?!
             }
             else
@@ -362,6 +383,7 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
             //findRoute(origin, destination); tarvitaanko?!
         }
     }
+
 
     // tälle lista koordinaatteja tai osoitteita (tai molempia) joilla kutsutaan forloopissa getRoutea. getRoute tuottaa listan route-objekteja getRouteFinishissä
     public void getFullRoute(List<List<String>> coordinates)
@@ -378,9 +400,9 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
             // onko parempi luoda uusi router jokaiselle getRoutelle vai ajaa yhtä router olion getRoutea forloopissa?
             new Router(this).getRoute(coordinates.get(i).get(0), coordinates.get(i).get(1), getBaseContext(), i);
         }
-
-
     }
+
+
     protected void startLocationUpdates()
     {
         if (checkLocationPermission())
@@ -388,6 +410,8 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
             LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
         }
     }
+
+
     protected void getLastLocation()
     {
         if(checkLocationPermission())
@@ -395,6 +419,8 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
             mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
         }
     }
+
+
     public boolean checkLocationPermission(){
         if (ContextCompat.checkSelfPermission(this,
                 android.Manifest.permission.ACCESS_FINE_LOCATION)
@@ -412,7 +438,6 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
                         new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
                         MY_PERMISSIONS_REQUEST_LOCATION);
 
-
             } else {
                 // No explanation needed, we can request the permission.
                 ActivityCompat.requestPermissions(this,
@@ -425,12 +450,14 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
         }
     }
 
+
     protected void createLocationRequest() {
         mLocationRequest = new LocationRequest();
         mLocationRequest.setInterval(10000);
         mLocationRequest.setFastestInterval(5000);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
     }
+
 
     protected synchronized void buildGoogleApiClient() {
         mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -441,14 +468,12 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
     }
     @Override
     public void onConnectionSuspended(int i) {}
-
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {}
 
 
-
-    protected boolean searchDirectTrackConnection(JSONArray json) {
-   /*     // Find text block to put data, JUST FOR DEBUGGING. FINAL DATA DERIVED THROUGH BUNDLES!(?)
+    protected void searchDirectTrackConnection(JSONArray json) {
+        // Find text block to put data, JUST FOR DEBUGGING. FINAL DATA DERIVED THROUGH BUNDLES!(?)
         TextView textView = (TextView) findViewById(R.id.result1);
         String text;
         Bundle routeData = new Bundle();
@@ -462,7 +487,7 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
                 JSONArray timeTable = train.getJSONArray("timeTableRows");
                 for (int y = 0; y < timeTable.length(); y++) {
                     JSONObject tt = timeTable.getJSONObject(y);
-                    if (tt.getString("stationShortCode").equals(stationStartShortCode) && tt.getString("type").equals("DEPARTURE")) {
+                    if (tt.getString("stationShortCode").equals(foundOriginStation.get(0)) && tt.getString("type").equals("DEPARTURE")) {  // foundOriginStation.get(0) = stationShortCode
                         // Split string "scheduledTime" into two different strings and convert to more user convenient format
                         // Create StringBuilder and remove last letter ('Z' in json array)
                         StringBuilder sb = new StringBuilder(tt.getString("scheduledTime"));
@@ -483,7 +508,7 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
                         timeStringBuilder.delete(5, timeStringBuilder.length());
                         // Put data into arrayList if correct
                         trainDataTimeTableDeparture.add(new String[]{tt.getString("type"), tt.getString("commercialTrack"), scheduledDateConverted, timeStringBuilder.toString()});
-                    } else if (tt.getString("stationShortCode").equals(stationEndShortCode) && tt.getString("type").equals("ARRIVAL")) {
+                    } else if (tt.getString("stationShortCode").equals(foundDestinationStation.get(0)) && tt.getString("type").equals("ARRIVAL")) { // foundDestinationStation.get(0) = stationShortCode
                         StringBuilder sb = new StringBuilder(tt.getString("scheduledTime"));
                         sb.deleteCharAt(sb.length() - 1);
                         // Split StringBuilder into two variables (scheduledDate and scheduledTime)
@@ -554,8 +579,6 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
         } else textView.setText("No direct trains today");
         Log.d("Function called", "Find closest station");
 
-        return directTrackConnectionFound;*/
-        return false;
     }
 
 
