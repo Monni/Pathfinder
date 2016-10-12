@@ -19,8 +19,19 @@ public class Route
     public Integer id;
     public String originAddress;
     public String destinationAddress;
+    public int index;
+    public String url;
 
     public Route(){}
+    public Route (String Url)
+    {
+        url = Url;
+    }
+    public Route(String Url, int Index)
+    {
+        index = Index;
+        url = Url;
+    }
     public Route(LatLng Origin, LatLng Destination, String OriginAddress,String DestinationAddress, Integer Duration, Integer Distance)
     {
         origin = Origin;
@@ -29,7 +40,9 @@ public class Route
         destinationAddress = DestinationAddress;
         duration = Duration;
         distance = Distance;
+        url = "";
     }
 
 
 }
+

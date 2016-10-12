@@ -11,6 +11,7 @@ import java.util.List;
 
 public interface AsyncResponse
 {
-    void getRouteFinish(Route route, int mode);
-    void getSpaceTimeFinish(List<String> output, int mode);
+    void getRouteFinish(Route route);
+    void getTotalDistanceAndDurationFinish(Route route);
+
 }

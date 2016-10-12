@@ -58,7 +58,8 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
     private List<String[]> trainData = new ArrayList<>();
     private List<String[]> trainDataTimeTableDeparture = new ArrayList<>();
     private List<String[]> trainDataTimeTableArrival = new ArrayList<>();
-    private List<Route> routeList = new ArrayList<>();
+    private List<List<Route>> routes = new ArrayList<>();
+    private int pendingRoutes = 0;
 //    private String stationStartShortCode = "";
  //   private String stationEndShortCode = "";
 
@@ -164,8 +165,6 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
                 Location destinationLocation = getLatLngFromAddress(destination);
                 foundDestinationStation = findClosestStationFromPoint(destinationLocation);
             }
-
-
         }
     }
 
@@ -303,7 +302,7 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
 
 
     @Override
-    public void getSpaceTimeFinish(List<String> data, int mode)
+    public void getTotalDistanceAndDurationFinish(Route route)
     {
 
    //     directTrackConnectionFound = searchDirectTrackConnection(trainJSON);
@@ -315,8 +314,21 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
   //      }
     }
     @Override
-    public void getRouteFinish(Route route, int mode) {
-        routeList.add(route);
+    public void getRouteFinish(Route route) {
+        // jos route on koko reitin ensimmäinen pätkä, niin lisätään uusi lista routesiin ja laitetaan uuteen listaan route
+        if(route.index == 0)
+        {
+            List<Route> routeList = new ArrayList<>();
+            routeList.add(route.index,route);
+            routes.add(routeList);
+
+        }
+        // jos ei, niin lisätään route routesin viimeiseen olemassaolevaan listaan jatkoksi
+        else
+        {
+            routes.get(routes.size()-1).add(route.index,route);
+        }
+        pendingRoutes--;
     }
     @Override
     public void onLocationChanged(Location location){}
@@ -351,13 +363,23 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
         }
     }
 
-    public void findRoute(String originString, String destinationString)
+    // tälle lista koordinaatteja tai osoitteita (tai molempia) joilla kutsutaan forloopissa getRoutea. getRoute tuottaa listan route-objekteja getRouteFinishissä
+    public void getFullRoute(List<List<String>> coordinates)
     {
+        /*
         String destination = URLEncoder.encode(destinationString);
         String origin = URLEncoder.encode(originString);
         Router router = new Router();
         router.delegate = this;
-        router.getRoute(origin, destination, getBaseContext());
+        router.getRoute(origin, destination, getBaseContext(), );*/
+        for(int i = 0;i<coordinates.size();i++)
+        {
+            pendingRoutes++;
+            // onko parempi luoda uusi router jokaiselle getRoutelle vai ajaa yhtä router olion getRoutea forloopissa?
+            new Router(this).getRoute(coordinates.get(i).get(0), coordinates.get(i).get(1), getBaseContext(), i);
+        }
+
+
     }
     protected void startLocationUpdates()
     {

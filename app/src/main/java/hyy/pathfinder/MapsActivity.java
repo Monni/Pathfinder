@@ -57,7 +57,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener, AsyncResponse {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
 
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
@@ -86,22 +86,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     @Override
-    public void getRouteFinish(Route route, int mode)
-    {
-        mMap.addPolyline(route.polylineOptions);
-    }
-
-    @Override
-    public void getSpaceTimeFinish(List<String> data, int mode)
-    {
-
-    }
-
-    @Override
     public void onConnected(Bundle bundle) {
 
         createLocationRequest();
-
+/*
         String destination = extras.getString("destination");
         String origin;
         if(useMyLocation)
@@ -109,8 +97,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             if (LocationPermissionAgent.isLocationEnabled(getBaseContext()))
             {
                 // tutkittava myöhemmin paremman/tarkemman paikannuksen mahdollisuuksia
-               /* ProviderLocationTracker GpsProviderLocationTracker = new ProviderLocationTracker(getApplicationContext(), ProviderLocationTracker.ProviderType.GPS);
-                GpsProviderLocationTracker.start();*/
+               // ProviderLocationTracker GpsProviderLocationTracker = new ProviderLocationTracker(getApplicationContext(), ProviderLocationTracker.ProviderType.GPS);
+              //  GpsProviderLocationTracker.start();
 
                 startLocationUpdates();
                 getLastLocation();
@@ -128,16 +116,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         {
             origin = extras.getString("origin");
             callRouter(origin, destination);
-        }
-    }
-
-    private void callRouter(String originString, String destinationString)
-    {
-        String destination = URLEncoder.encode(destinationString);
-        String origin = URLEncoder.encode(originString);
-        Router router = new Router();
-        router.delegate = this;
-        router.getRoute(origin, destination, getBaseContext());
+        }*/
     }
 
     @Override

@@ -25,39 +25,28 @@ import java.util.List;
 /**
  * Created by Prometheus on 22-Sep-16.
  */
-public class Router extends AsyncTask<String, Void, Void>
+public class Router extends AsyncTask<Route, Void, Route>
 {
     private int mode;
     public AsyncResponse delegate = null;
-    private List<String> list;
-    private PolylineOptions polylineOptions;
-    private Route route;
-
+    public Router(){}
+    public Router(AsyncResponse Delegate)
+    {
+        delegate = Delegate;
+    }
     @Override
-    protected Void doInBackground(String... urlString) {
+    protected Route doInBackground(Route... r) {
         try {
             FetchUrl fetchUrl = new FetchUrl();
-            String jsonString = fetchUrl.downloadUrl(urlString[0]);
+            String jsonString = fetchUrl.downloadUrl(r[0].url);
             JSONObject jObject = new JSONObject(jsonString);
             DataParser parser = new DataParser();
-            switch (mode) {
-                case 1:
-                    // halutaan vain etäisyys ja kesto
-                    list = parser.parseTotalDistanceAndDuration(jObject);
-
-                    break;
-                case 2:
-                    // halutaan piirretty reitti paikasta A paikkaan B
-                    List<List<HashMap<String, String>>> linelist = parser.parseLineList(jObject);
-                    route = parser.parseJsonToRoute(jObject);
-                    polylineOptions = getDrawnRoute(linelist);
-                    route.polylineOptions = polylineOptions;
-
-
-                    break;
-                default:
-                    throw new NullPointerException("No mode selected for Router");
-            }
+            Route route = parser.parseJsonToRoute(jObject);
+            List<List<HashMap<String, String>>> linelist = parser.parseLineList(jObject);
+            PolylineOptions pOptions = getDrawnRoute(linelist);
+            route.polylineOptions = pOptions;
+            route.index = r[0].index;
+            return route;
         }
         catch (IOException e)
         {
@@ -71,21 +60,23 @@ public class Router extends AsyncTask<String, Void, Void>
     }
 
     @Override
-    protected void onPostExecute(Void v)
+    protected void onPostExecute(Route r)
     {
         switch (mode)
         {
             case 1:
                 // halutaan vain etäisyys ja kesto
-                delegate.getSpaceTimeFinish(list, mode);
+                delegate.getTotalDistanceAndDurationFinish(r);
                 break;
             case 2:
                 // halutaan piirretty reitti paikasta A paikkaan B
-                delegate.getRouteFinish(route, mode);
+                delegate.getRouteFinish(r);
                 break;
             default:
                 throw new NullPointerException("No mode selected for Router");
         }
+        //delegate.getRouteFinish(r);
+
     }
 
     private PolylineOptions getDrawnRoute(List<List<HashMap<String, String>>> data)
@@ -126,13 +117,15 @@ public class Router extends AsyncTask<String, Void, Void>
     {
         String urlString = "https://maps.googleapis.com/maps/api/directions/json?origin=" + origin + "&destination=" + destination + "&key=" + context.getResources().getString(R.string.google_maps_key);
         mode = 1;
-        this.execute(urlString);
+        Route route = new Route(urlString);
+        this.execute(route);
     }
 
-    public void getRoute(String origin, String destination, Context context)
+    public void getRoute(String origin, String destination, Context context, int index)
     {
         String urlString = "https://maps.googleapis.com/maps/api/directions/json?origin=" + origin + "&destination=" + destination + "&key=" + context.getResources().getString(R.string.google_maps_key);
         mode = 2;
-        this.execute(urlString);
+        Route route = new Route(urlString, index);
+        this.execute(route);
     }
 }

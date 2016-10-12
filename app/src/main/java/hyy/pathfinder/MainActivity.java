@@ -20,31 +20,10 @@ import java.util.List;
 
 
 
-public class MainActivity extends AppCompatActivity implements AsyncResponse {
+public class MainActivity extends AppCompatActivity {
     // Create DecimalFormat to force date and time into two digit format
     private DecimalFormat doubleDigitFormat = new DecimalFormat("00");
 
-    @Override
-    public void getSpaceTimeFinish(List<String> output, int mode){
-        //Here you will receive the result fired from async class
-        //of onPostExecute(result) method.
-        TextView tv = (TextView) findViewById(R.id.txtJSON);
-        StringBuilder result = new StringBuilder();
-        for (String data: output)
-        {
-            result.append(data);
-        }
-        String asdf = result.toString();
-        tv.setText(asdf);
-
-    }
-
-    @Override
-    public void getRouteFinish(Route route, int mode){
-        //Here you will receive the result fired from async class
-        //of onPostExecute(result) method.
-
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -140,12 +119,13 @@ public class MainActivity extends AppCompatActivity implements AsyncResponse {
 
     public void testJSON(View view)
     {
+        /*
         Router router = new Router();
         router.delegate = this;
         EditText etOrigin = (EditText) findViewById(R.id.etOrigin);
         EditText etDestination = (EditText) findViewById(R.id.etDestination);
         router.getTravelDistanceAndDuration(etOrigin.getText().toString(), etDestination.getText().toString(),getBaseContext());
-
+*/
     }
 
 
