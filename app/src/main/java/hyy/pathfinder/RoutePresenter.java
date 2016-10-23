@@ -72,8 +72,8 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
     private Boolean useMyLocation;
     private List<String[]> stationData = new ArrayList<>(); // get info from current stations. Name, shortCode, latitude and longitude
 
-    private ArrayList foundOriginStation;
-    private ArrayList foundDestinationStation;
+    private String[] foundOriginStation;
+    private String[] foundDestinationStation;
 
 
     // Monitor AsyncTask status
@@ -99,29 +99,60 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
         destination = extras.getString("destination");
         useMyLocation = extras.getBoolean("useMyLocation");
 
-
         // build Google API client
         buildGoogleApiClient();
         mGoogleApiClient.connect();
 
-
-        // Create and run needed AsyncTasks.
+ /*       // Create and run needed AsyncTasks.
         Log.d("AyncTask called", "stationDataTask");
         FetchStationDataTask stationDataTask = new FetchStationDataTask();   // Get station metadata
         stationDataTask.execute("http://rata.digitraffic.fi/api/v1/metadata/stations.json");
+*/
+
+        /// UUDEN ASYNCLUOKAN TESTIAJOA
+        Log.d("AyncTask called", "asyncStationFetcher");
+        AsyncJsonFetcher asyncStationFetcher = new AsyncJsonFetcher(this);
+        asyncStationFetcher.fetchStations("http://rata.digitraffic.fi/api/v1/metadata/stations.json");
 
 
-       // KLUP pitääkö tää kutsua vasta kun lähin asema löydetty? no pitäähän se. (shortcodeja ei muuten tiijä, eli stationdatatask oltava ajettuna
-     /*   Log.d("AyncTask called", "trainDataTask");
-        FetchDataTask trainDataTask = new FetchDataTask();
-        trainDataTask.execute("http://rata.digitraffic.fi/api/v1/schedules?departure_station="
-                + stationStartShortCode + "&arrival_station=" + stationEndShortCode + "&departure_date=" + stationStartDate);*/
+
 
         Log.d("AyncTask called", "monitorDataTask");
         MonitorTask monitorTask = new MonitorTask();
         monitorTask.execute();
     }
 
+    @Override
+    public void onAsyncJsonFetcherComplete(int mode, JSONArray json){
+        switch (mode) {
+            case 1:
+                // Fetch Stations
+                try {
+                    for (int i=0; i < json.length(); i++) {
+                        JSONObject station = json.getJSONObject(i);
+                        if (station.getString("passengerTraffic") == "true") {
+                            // Add data to a two-dimensional array of passenger stations in Finland, including longitude and latitude
+                            stationData.add(new String[] {station.getString("stationName"), station.getString("stationShortCode"), station.getString("latitude"), station.getString("longitude")});
+                        }
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                stationDataTaskFinished = true;
+                Log.d("AsyncTask finished", "stationDataTask");
+                break;
+            case 2:
+                // Fetch Trains
+                trainDataTaskFinished = true;
+                Log.d("AsyncTask finished", "trainDataTask");
+                trainJSON = json;
+                break;
+            default:
+                Log.d("Async switch case", "mode incorrect");
+                break;
+        }
+
+    }
 
     // MonitorDataTask monitors and waits until other AsyncTasks are ready, then magic happens
     class MonitorTask extends AsyncTask<Void, Void, Void> {
@@ -135,6 +166,7 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
                     e.printStackTrace();
                 }
             }
+            Log.d("findClosestStations", "Called");
             findClosestStations(); // Find closest stations from origin and destination after stationDataTask finishes
 
             // Start another AsyncTask within Asynctask but on the main thread
@@ -142,9 +174,13 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
                 @Override
                 public void run() {
                     Log.d("AyncTask called", "trainDataTask");
-                    FetchTrainDataTask trainDataTask = new FetchTrainDataTask();
-                    trainDataTask.execute("http://rata.digitraffic.fi/api/v1/schedules?departure_station="
-                            + foundOriginStation.get(0) + "&arrival_station=" + foundDestinationStation.get(0) + "&departure_date=" + originDate); // KLUP is originDate in correct format??!?!
+                    Log.d("AsyncTask data", "http://rata.digitraffic.fi/api/v1/schedules?departure_station="
+                            + foundOriginStation[0] + "&arrival_station=" + foundDestinationStation[0] + "&departure_date=" + originDate);
+
+                    AsyncJsonFetcher asyncTrainFetcher = new AsyncJsonFetcher(RoutePresenter.this);
+                    asyncTrainFetcher.fetchTrains("http://rata.digitraffic.fi/api/v1/schedules?departure_station="
+                            + foundOriginStation[0] + "&arrival_station=" + foundDestinationStation[0] + "&departure_date=" + originDate);
+                    Log.d("AyncTask wait", "trainDataTask");
                 }
             });
 
@@ -169,6 +205,7 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
             progressDialog.dismiss();
         }
     }
+
 
 
     class FetchTrainDataTask extends AsyncTask<String, Void, JSONArray> {
@@ -208,7 +245,7 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
         }
     }
 
-
+/*
     class FetchStationDataTask extends AsyncTask<String, Void, JSONArray> {
         @Override
         protected JSONArray doInBackground(String... urls) {
@@ -251,7 +288,7 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
             Log.d("AsyncTask finished", "stationDataTask");
         }
     }
-
+*/
 
 // Here happens the main thingys
     private void findClosestStations() {
@@ -259,15 +296,15 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
         router.delegate = RoutePresenter.this;
 
         if (useMyLocation) {
-            ArrayList foundOriginStation = findClosestStationFromPoint(mLastLocation); // Find closest train station from origin
-            String originStationLocation = (foundOriginStation.get(1) +","+ foundOriginStation.get(2)); // Get Latitude and Longitude from found closest station and convert into a string
+            foundOriginStation = findClosestStationFromPoint(mLastLocation); // Find closest train station from origin
+            String originStationLocation = (foundOriginStation[1] +","+ foundOriginStation[2]); // Get Latitude and Longitude from found closest station and convert into a string
             String originLocTemp = (mLastLocation.getLatitude() +","+ mLastLocation.getLongitude()); // Convert user location from Location to String
             /* KLUP tää alempi tieto pitäs tallentaa johonkin ja käyttää sitä searchDirectTrackConnectionissa plus-aikana?! */
             router.getTravelDistanceAndDuration(originLocTemp, originStationLocation, getBaseContext()); // Get dist&dur from user location to closest station
         } else {
             Location mCustomLocation = getLocationFromAddress(origin); // Convert given address to Location (lat&long)
-            ArrayList foundOriginStation = findClosestStationFromPoint(mCustomLocation); // Find closest train station from converted Location
-            String originStationLocation = (foundOriginStation.get(1) +","+ foundOriginStation.get(2)); // Get Latitude and Longitude from found closest station and convert into a string
+            foundOriginStation = findClosestStationFromPoint(mCustomLocation); // Find closest train station from converted Location
+            String originStationLocation = (foundOriginStation[1] +","+ foundOriginStation[2]); // Get Latitude and Longitude from found closest station and convert into a string
             /* KLUP tää alempi tieto pitäs tallentaa johonkin ja käyttää sitä searchDirectTrackConnectionissa plus-aikana?! */
             router.getTravelDistanceAndDuration(origin, originStationLocation, getBaseContext()); // Get dist&dur from given location to closest station KLUP!!! Tarviiko origin vaihtaa lat&long-stringiksi?
         }
@@ -296,8 +333,8 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
 
 
     // Finds closest train station from given coordinates. Compares to every station within stationData List
-    private ArrayList<String> findClosestStationFromPoint(Location mLastLocation) {
-        ArrayList<String> closestStation = new ArrayList<>();
+    private String[] findClosestStationFromPoint(Location mLastLocation) {
+        String[] closestStationList = new String[3];
         Location pointOrigin = new Location(mLastLocation);
         String closestStationName = "";
         Float closestDist = 9999999999999999f;
@@ -309,14 +346,14 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
             Float distTemp = pointOrigin.distanceTo(pointDestination);
             if (distTemp < closestDist) {
                 closestDist = distTemp;
-                closestStation.add(stationData.get(i)[1].toString());
-                closestStation.add(stationData.get(i)[2].toString());
-                closestStation.add(stationData.get(i)[3].toString());
+                closestStationList[0] = stationData.get(i)[1].toString();
+                closestStationList[1] = stationData.get(i)[2];
+                closestStationList[2] = stationData.get(i)[3];
                 closestStationName = stationData.get(i)[1];
             }
         }
         Log.d("Closest station", closestStationName);
-        return closestStation;
+        return closestStationList;
     }
 
 
@@ -487,7 +524,7 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
                 JSONArray timeTable = train.getJSONArray("timeTableRows");
                 for (int y = 0; y < timeTable.length(); y++) {
                     JSONObject tt = timeTable.getJSONObject(y);
-                    if (tt.getString("stationShortCode").equals(foundOriginStation.get(0)) && tt.getString("type").equals("DEPARTURE")) {  // foundOriginStation.get(0) = stationShortCode
+                    if (tt.getString("stationShortCode").equals(foundOriginStation[0]) && tt.getString("type").equals("DEPARTURE")) {  // foundOriginStation.get(0) = stationShortCode
                         // Split string "scheduledTime" into two different strings and convert to more user convenient format
                         // Create StringBuilder and remove last letter ('Z' in json array)
                         StringBuilder sb = new StringBuilder(tt.getString("scheduledTime"));
@@ -508,7 +545,7 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
                         timeStringBuilder.delete(5, timeStringBuilder.length());
                         // Put data into arrayList if correct
                         trainDataTimeTableDeparture.add(new String[]{tt.getString("type"), tt.getString("commercialTrack"), scheduledDateConverted, timeStringBuilder.toString()});
-                    } else if (tt.getString("stationShortCode").equals(foundDestinationStation.get(0)) && tt.getString("type").equals("ARRIVAL")) { // foundDestinationStation.get(0) = stationShortCode
+                    } else if (tt.getString("stationShortCode").equals(foundDestinationStation[0]) && tt.getString("type").equals("ARRIVAL")) { // foundDestinationStation.get(0) = stationShortCode
                         StringBuilder sb = new StringBuilder(tt.getString("scheduledTime"));
                         sb.deleteCharAt(sb.length() - 1);
                         // Split StringBuilder into two variables (scheduledDate and scheduledTime)
