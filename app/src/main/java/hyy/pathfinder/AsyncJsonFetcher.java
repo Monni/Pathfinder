@@ -1,5 +1,6 @@
 package hyy.pathfinder;
 
+import android.app.Activity;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -50,7 +51,7 @@ public class AsyncJsonFetcher extends AsyncTask<String, Void, JSONArray> {
         }
 
         protected void onPostExecute(JSONArray json) {
-            Log.d("asyncJsonFetcher", "onPostExecute");
+            Log.d("asyncJsonFetcher", "onPostExecute, mode "+mode);
             if (json != null) {
                 delegate.onAsyncJsonFetcherComplete(mode, json); // calls AsyncResponse.java interface
             } else {
@@ -65,8 +66,13 @@ public class AsyncJsonFetcher extends AsyncTask<String, Void, JSONArray> {
     }
     public void fetchTrains(String url) {
         mode = 2;
-        AsyncJsonFetcher asyncJsonFetcher = new AsyncJsonFetcher(delegate);
-        asyncJsonFetcher.execute(url);
+       //AsyncJsonFetcher asyncJsonFetcher = new AsyncJsonFetcher(delegate);
+        //asyncJsonFetcher.execute(url);
+        try {
+            this.execute(url);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         Log.d("fetchTrains","called");
     }
 }

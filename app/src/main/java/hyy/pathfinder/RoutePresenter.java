@@ -1,15 +1,19 @@
 package hyy.pathfinder;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.pm.PackageManager;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -37,6 +41,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.text.MessageFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -44,6 +49,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Random;
 
 /**
  * Created by h4211 on 10/11/2016.
@@ -60,8 +66,11 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
     private List<String[]> trainDataTimeTableArrival = new ArrayList<>();
     private List<List<Route>> routes = new ArrayList<>();
     private int pendingRoutes = 0;
+    private ProgressDialog progressDialog;
 //    private String stationStartShortCode = "";
  //   private String stationEndShortCode = "";
+
+    private Activity context = this;
 
     // Data collected from calling intent (MainActivity)
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.ENGLISH);
@@ -75,10 +84,6 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
     private String[] foundOriginStation;
     private String[] foundDestinationStation;
 
-
-    // Monitor AsyncTask status
-    private boolean stationDataTaskFinished = false;
-    private boolean trainDataTaskFinished = false;
     private JSONArray trainJSON;
 
 
@@ -103,27 +108,60 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
         buildGoogleApiClient();
         mGoogleApiClient.connect();
 
- /*       // Create and run needed AsyncTasks.
-        Log.d("AyncTask called", "stationDataTask");
-        FetchStationDataTask stationDataTask = new FetchStationDataTask();   // Get station metadata
-        stationDataTask.execute("http://rata.digitraffic.fi/api/v1/metadata/stations.json");
-*/
 
-        /// UUDEN ASYNCLUOKAN TESTIAJOA
-        Log.d("AyncTask called", "asyncStationFetcher");
-        AsyncJsonFetcher asyncStationFetcher = new AsyncJsonFetcher(this);
-        asyncStationFetcher.fetchStations("http://rata.digitraffic.fi/api/v1/metadata/stations.json");
+        // Main logic //////////////
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setIndeterminate(true);
+        progressDialog.setMessage(getCustomProgressDialogMessage());
+        progressDialog.show();
+
+        /// Fetch and parse current train stations from digitraffic
+        Message message = handler.obtainMessage();
+        message.what = 0;
+        handler.sendMessage(message);
+        Log.d("Handler Message", message.toString());
 
 
-
-
-        Log.d("AyncTask called", "monitorDataTask");
-        MonitorTask monitorTask = new MonitorTask();
-        monitorTask.execute();
     }
+
+    private Handler handler = new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message msg) {
+
+            switch(msg.what){
+                case 0:     /// Fetch and parse current train stations from digitraffic
+                    Log.d("AsyncTask called", "stationDataTask");
+                    Log.d("AsyncTask data","http://rata.digitraffic.fi/api/v1/metadata/stations.json");
+
+                    AsyncJsonFetcher asyncStationFetcher = new AsyncJsonFetcher(RoutePresenter.this);
+                    asyncStationFetcher.fetchStations("http://rata.digitraffic.fi/api/v1/metadata/stations.json");
+                    break;
+                case 1:
+                    Log.d("findClosestStations", "called");
+                    findClosestStations(); // Find closest stations from origin and destination after stationDataTask finishes
+
+                    Log.d("AyncTask called", "trainDataTask");
+                    Log.d("AsyncTask data", "http://rata.digitraffic.fi/api/v1/schedules?departure_station="
+                            + foundOriginStation[0] + "&arrival_station=" + foundDestinationStation[0] + "&departure_date=" + originDate);
+
+                    AsyncJsonFetcher asyncTrainFetcher = new AsyncJsonFetcher(RoutePresenter.this);
+                    asyncTrainFetcher.delegate = RoutePresenter.this;
+                    asyncTrainFetcher.fetchTrains("http://rata.digitraffic.fi/api/v1/schedules?departure_station="
+                            + foundOriginStation[0] + "&arrival_station=" + foundDestinationStation[0] + "&departure_date=" + originDate);
+                    break;
+                case 2:
+                    searchDirectTrackConnection(trainJSON);
+                    progressDialog.dismiss();
+                    break;
+            }
+
+            return false;
+        }
+    });
 
     @Override
     public void onAsyncJsonFetcherComplete(int mode, JSONArray json){
+        Message message = handler.obtainMessage();
         switch (mode) {
             case 1:
                 // Fetch Stations
@@ -138,14 +176,20 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-                stationDataTaskFinished = true;
                 Log.d("AsyncTask finished", "stationDataTask");
+
+                message.what = 1;
+                handler.sendMessage(message);
+                Log.d("Handler Message", message.toString());
                 break;
             case 2:
                 // Fetch Trains
-                trainDataTaskFinished = true;
                 Log.d("AsyncTask finished", "trainDataTask");
                 trainJSON = json;
+
+                message.what = 2;
+                handler.sendMessage(message);
+                Log.d("Handler Message", message.toString());
                 break;
             default:
                 Log.d("Async switch case", "mode incorrect");
@@ -154,144 +198,8 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
 
     }
 
-    // MonitorDataTask monitors and waits until other AsyncTasks are ready, then magic happens
-    class MonitorTask extends AsyncTask<Void, Void, Void> {
-        ProgressDialog progressDialog;
-        @Override
-        protected Void doInBackground(Void... params) {
-            while (!stationDataTaskFinished) {
-                try {
-                    Thread.sleep(250);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-            Log.d("findClosestStations", "Called");
-            findClosestStations(); // Find closest stations from origin and destination after stationDataTask finishes
-
-            // Start another AsyncTask within Asynctask but on the main thread
-            RoutePresenter.this.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Log.d("AyncTask called", "trainDataTask");
-                    Log.d("AsyncTask data", "http://rata.digitraffic.fi/api/v1/schedules?departure_station="
-                            + foundOriginStation[0] + "&arrival_station=" + foundDestinationStation[0] + "&departure_date=" + originDate);
-
-                    AsyncJsonFetcher asyncTrainFetcher = new AsyncJsonFetcher(RoutePresenter.this);
-                    asyncTrainFetcher.fetchTrains("http://rata.digitraffic.fi/api/v1/schedules?departure_station="
-                            + foundOriginStation[0] + "&arrival_station=" + foundDestinationStation[0] + "&departure_date=" + originDate);
-                    Log.d("AyncTask wait", "trainDataTask");
-                }
-            });
-
-            while (!trainDataTaskFinished) {
-                try {
-                    Thread.sleep(250);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-            //findRoutes(); // Called after other AsyncTasks are ready and main thingys run here! ////////////
-
-            return null;
-        }
-        protected void onPreExecute() {
-            progressDialog = ProgressDialog.show(RoutePresenter.this, "Tekemistä", "Lasketaan ratapalkkeja", true);
-        }
-        // MAGIC HAPPENS HERE
-        protected void onPostExecute(Void result) {
-            Log.d("AsyncTask finished", "MonitorDataTask");
-           // boolean directTrackConnectionFound = false;
-            progressDialog.dismiss();
-        }
-    }
-
-
-
-    class FetchTrainDataTask extends AsyncTask<String, Void, JSONArray> {
-        @Override
-        protected JSONArray doInBackground(String... urls) {
-            HttpURLConnection urlConnection = null;
-            JSONArray json = null;
-            try {
-                URL url = new URL(urls[0]);
-                urlConnection = (HttpURLConnection) url.openConnection();   // Open connection to rata.digitraffic.fi
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
-                StringBuilder stringBuilder = new StringBuilder();
-                String line;
-                while ((line = bufferedReader.readLine()) != null) {
-                    stringBuilder.append(line).append("\n");
-                }
-                bufferedReader.close();
-                json = new JSONArray(stringBuilder.toString());
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (JSONException e) {
-                e.printStackTrace();
-            } finally {
-                if (urlConnection != null) urlConnection.disconnect();
-            }
-            return json;
-        }
-        protected void onPreExecute() {
-            // Search for station locations here and compare to user input(location) here, to find closest one???
-        }
-        protected void onPostExecute(JSONArray json) {
-            //      boolean directTrackConnectionFound = false;
-            //          directTrackConnectionFound = searchDirectTrackConnection(json);
-            trainDataTaskFinished = true;
-            Log.d("AsyncTask finished", "trainDataTask");
-            trainJSON = json;
-        }
-    }
-
-/*
-    class FetchStationDataTask extends AsyncTask<String, Void, JSONArray> {
-        @Override
-        protected JSONArray doInBackground(String... urls) {
-            HttpURLConnection urlConnection = null;
-            JSONArray json = null;
-            try {
-                URL url = new URL(urls[0]);
-                urlConnection = (HttpURLConnection) url.openConnection();   // Open connection to rata.digitraffic.fi
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
-                StringBuilder stringBuilder = new StringBuilder();
-                String line;
-                while ((line = bufferedReader.readLine()) != null) {
-                    stringBuilder.append(line).append("\n");
-                }
-                bufferedReader.close();
-                json = new JSONArray(stringBuilder.toString());
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (JSONException e) {
-                e.printStackTrace();
-            } finally {
-                if (urlConnection != null) urlConnection.disconnect();
-            }
-            return json;
-        }
-
-        protected void onPostExecute(JSONArray json) {
-            try {
-                for (int i=0; i < json.length(); i++) {
-                    JSONObject station = json.getJSONObject(i);
-                    if (station.getString("passengerTraffic") == "true") {
-                        // Add data to a two-dimensional array of passenger stations in Finland, including longitude and latitude
-                        stationData.add(new String[] {station.getString("stationName"), station.getString("stationShortCode"), station.getString("latitude"), station.getString("longitude")});
-                    }
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            stationDataTaskFinished = true;
-            Log.d("AsyncTask finished", "stationDataTask");
-        }
-    }
-*/
-
-// Here happens the main thingys
     private void findClosestStations() {
+        Log.d("findClosestStations","Started");
         Router router = new Router();
         router.delegate = RoutePresenter.this;
 
@@ -335,7 +243,7 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
     // Finds closest train station from given coordinates. Compares to every station within stationData List
     private String[] findClosestStationFromPoint(Location mLastLocation) {
         String[] closestStationList = new String[3];
-        Location pointOrigin = new Location(mLastLocation);
+        Location pointOrigin = new Location(mLastLocation);         //////// KLUP jos tyhjä niin kaataa softan
         String closestStationName = "";
         Float closestDist = 9999999999999999f;
 
@@ -354,6 +262,20 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
         }
         Log.d("Closest station", closestStationName);
         return closestStationList;
+    }
+
+    // Custom texts for progressdialog
+    private String getCustomProgressDialogMessage(){
+        List<String> messageList = new ArrayList<>();
+        // You can freely add text here and it shows up in the progressDialog
+        messageList.add("Lasketaan ratapalkkeja");
+        messageList.add("Hölkätään jalkakäytävällä");
+        messageList.add("Ihmetellään nähtävyyksiä");
+
+        Random random = new Random();
+        int i = random.nextInt(messageList.size());
+        String message = messageList.get(i);
+        return message;
     }
 
 
@@ -525,6 +447,7 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
                 for (int y = 0; y < timeTable.length(); y++) {
                     JSONObject tt = timeTable.getJSONObject(y);
                     if (tt.getString("stationShortCode").equals(foundOriginStation[0]) && tt.getString("type").equals("DEPARTURE")) {  // foundOriginStation.get(0) = stationShortCode
+                        Log.d("OriginStation", foundOriginStation[0]);
                         // Split string "scheduledTime" into two different strings and convert to more user convenient format
                         // Create StringBuilder and remove last letter ('Z' in json array)
                         StringBuilder sb = new StringBuilder(tt.getString("scheduledTime"));
@@ -595,7 +518,6 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
         }
 
 
-        boolean directTrackConnectionFound = false;
         // Put all retrieved data into a bundle for easier handling(?)
         if (trainData.size() != 0) {
             routeData.putString("trainNumber", trainData.get(0)[0]);
