@@ -534,7 +534,7 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
                     + routeData.getString("depType") + " " + routeData.getString("depTrack") + " " + routeData.getString("depDate") + " " + routeData.getString("depTime") + "\n"
                     + routeData.getString("arrType") + " " + routeData.getString("arrTrack") + " " + routeData.getString("arrDate") + " " + routeData.getString("arrTime") + "\n";
             textView.setText(text);
-            directTrackConnectionFound = true;
+
         } else textView.setText("No direct trains today");
         Log.d("Function called", "Find closest station");
 
