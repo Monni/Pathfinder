@@ -537,9 +537,5 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
 
         } else textView.setText("No direct trains today");
         Log.d("Function called", "Find closest station");
-
     }
-
-
-
 }
