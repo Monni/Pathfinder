@@ -1,42 +1,36 @@
 package hyy.pathfinder;
 
 import android.content.Intent;
+import android.os.AsyncTask;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
 
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.maps.model.PolylineOptions;
 
+
+import java.text.DecimalFormat;
+import java.util.Calendar;
 import java.util.List;
 
 
-public class MainActivity extends AppCompatActivity implements AsyncResponse {
 
-    @Override
-    public void getSpaceTimeFinish(List<String> output){
-        //Here you will receive the result fired from async class
-        //of onPostExecute(result) method.
-        TextView tv = (TextView) findViewById(R.id.txtJSON);
-        StringBuilder result = new StringBuilder();
-        for (String data: output)
-        {
-            result.append(data);
-        }
-        String asdf = result.toString();
-        tv.setText(asdf);
-
-    }
-
-    @Override
-    public void getRouteFinish(PolylineOptions polylineOptions){
-        //Here you will receive the result fired from async class
-        //of onPostExecute(result) method.
-
-    }
+public class MainActivity extends AppCompatActivity {
+    // Create DecimalFormat to force date and time into two digit format
+    private DecimalFormat doubleDigitFormat = new DecimalFormat("00");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,22 +42,65 @@ public class MainActivity extends AppCompatActivity implements AsyncResponse {
         {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
             {
+                Log.d("In onCheckedChanged", "start");
                 if (isChecked == true && LocationPermissionAgent.isLocationEnabled(getBaseContext()) == false)
                 {
+                    Log.d("In onCheckedChanged", "first");
                     PermissionDialogFragment permissionDialogFragment = new PermissionDialogFragment();
                     permissionDialogFragment.show(getSupportFragmentManager(),"permissionRequest");
                 }
                 else if(isChecked == true && LocationPermissionAgent.isLocationEnabled(getBaseContext()) == true)
                 {
+                    Log.d("In onCheckedChanged", "second");
                     EditText etOrigin = (EditText) findViewById(R.id.etOrigin);
                     etOrigin.setEnabled(false);
+                    ApplicationData.startLocationUpdates(MainActivity.this);
                 }
                 else if(isChecked == false)
                 {
+                    Log.d("In onCheckedChanged", "third");
                     EditText etOrigin = (EditText) findViewById(R.id.etOrigin);
                     etOrigin.setEnabled(true);
+                    //ApplicationData.stopLocationUpdates();
                 }
+            }
+        });
 
+
+        // Calendar for departure date and time, gets current system datetime
+        final Calendar calendar = Calendar.getInstance();
+        final int month = calendar.get(Calendar.MONTH) + 1;
+        final int day = calendar.get(Calendar.DAY_OF_MONTH);
+        final int year = calendar.get(Calendar.YEAR);
+        final int hour = Integer.valueOf(doubleDigitFormat.format(calendar.get(Calendar.HOUR_OF_DAY)));
+        final int minute = Integer.valueOf(doubleDigitFormat.format(calendar.get(Calendar.MINUTE)));
+
+
+        // Create listener for "immediately" button. If checked, disable departure date
+        CompoundButton locStartImmediately = (Switch) findViewById(R.id.locStartImmediately);
+        locStartImmediately.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener()
+        {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked == true) {
+                    // Disable date, set current date
+                    findViewById(R.id.locStartDate).setEnabled(false);
+                    EditText date = (EditText) findViewById(R.id.locStartDate);
+                    date.setText(day +"."+ month +"."+ year);
+                    // Disable time, set current time
+                    findViewById(R.id.locStartTime).setEnabled(false);
+                    EditText time = (EditText) findViewById(R.id.locStartTime);
+                    time.setText(doubleDigitFormat.format(hour) +":"+ doubleDigitFormat.format(minute));
+                }
+                else  {
+                    // Return control to date / EditText
+                    findViewById(R.id.locStartDate).setEnabled(true);
+                    EditText date = (EditText) findViewById(R.id.locStartDate);
+                    date.setHint("dd.mm.yyyy");
+                    // Return control to time / EditText
+                    findViewById(R.id.locStartTime).setEnabled(true);
+                    EditText time = (EditText) findViewById(R.id.locStartTime);
+                    time.setHint("hh:mm");
+                }
             }
         });
 
@@ -94,15 +131,50 @@ public class MainActivity extends AppCompatActivity implements AsyncResponse {
         startActivity(intent);
     }
 
-    public void testJSON(View view)
+
+    public void btnRoute_clicked(View view)
     {
-        Router router = new Router();
-        router.delegate = this;
+        // Convert departure date into suitable format (YYYY-MM-DD)
+        EditText locStartDate = (EditText) findViewById(R.id.locStartDate);
+        String[] startDateString = locStartDate.getText().toString().split("\\.");
+        String locStartDateConverted = "";
+        for (int i = startDateString.length; i > 0; i--) {
+            locStartDateConverted += doubleDigitFormat.format(Double.valueOf(startDateString[i-1]));
+            if (i-1 != 0) {
+                locStartDateConverted += "-";
+            }
+        }
+        String originDate = locStartDateConverted;
+        // Get departure time (HH:MM)
+        EditText StartTime = (EditText) findViewById(R.id.locStartTime);
+        String originTime = StartTime.getText().toString();
+
+
+        Intent intent = new Intent(this, RoutePresenter.class);
         EditText etOrigin = (EditText) findViewById(R.id.etOrigin);
         EditText etDestination = (EditText) findViewById(R.id.etDestination);
-        router.getTravelDistanceAndDuration(etOrigin.getText().toString(), etDestination.getText().toString(),getBaseContext());
+        Switch gpsSwitch = (Switch) findViewById(R.id.gpsSwitch);
+        String origin;
+        boolean useMyLocation = false;
 
+        if(gpsSwitch.isChecked())
+        {
+            origin = "my_location";
+            useMyLocation = true;
+        }
+        else {
+            origin = etOrigin.getText().toString();
+        }
+        String destination = etDestination.getText().toString();
+
+
+        intent.putExtra("origin", origin);
+        intent.putExtra("originDate", originDate);
+        intent.putExtra("originTime", originTime);
+        intent.putExtra("destination", destination);
+        intent.putExtra("useMyLocation", useMyLocation);
+
+        startActivity(intent);
     }
-
 }
 

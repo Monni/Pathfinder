@@ -1,5 +1,6 @@
 package hyy.pathfinder;
 
+import android.os.AsyncTask;
 import android.util.Log;
 
 import java.io.BufferedReader;

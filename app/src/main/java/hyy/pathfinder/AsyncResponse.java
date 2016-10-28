@@ -3,6 +3,8 @@ package hyy.pathfinder;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 
+import org.json.JSONArray;
+
 import java.util.List;
 
 /**
@@ -11,6 +13,8 @@ import java.util.List;
 
 public interface AsyncResponse
 {
-    void getRouteFinish(PolylineOptions polylineOptions);
-    void getSpaceTimeFinish(List<String> output);
+    void getRouteFinish(Route route);
+    void getTotalDistanceAndDurationFinish(Route route);
+    void onAsyncJsonFetcherComplete(int mode, JSONArray json);
+
 }
