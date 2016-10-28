@@ -11,6 +11,8 @@ import android.widget.EditText;
 import android.widget.Switch;
 
 
+import com.google.android.gms.maps.GoogleMap;
+
 import java.text.DecimalFormat;
 import java.util.Calendar;
 
@@ -57,9 +59,11 @@ public class MainActivity extends AppCompatActivity implements AppDataInterface 
                     EditText etOrigin = (EditText) findViewById(R.id.etOrigin);
                     etOrigin.setEnabled(false);
                     ApplicationData.startLocationUpdates(MainActivity.this);
+                    ApplicationData.deviceLocationIsUsable = true;
                 }
                 else if(isChecked == false)
                 {
+                    ApplicationData.deviceLocationIsUsable = false;
                     Log.d("In onCheckedChanged", "third");
                     EditText etOrigin = (EditText) findViewById(R.id.etOrigin);
                     etOrigin.setEnabled(true);
@@ -106,25 +110,30 @@ public class MainActivity extends AppCompatActivity implements AppDataInterface 
                 }
             }
         });
-
     }
 
     @Override
-    public void suspended(int errorCode)
+    public void atSuspended(int errorCode)
     {
-
+        // jätetään tyhjäksi
     }
 
     @Override
-    public void connected(Bundle bundle)
+    public void atConnected(Bundle bundle)
     {
-
+        // jätetään tyhjäksi
     }
 
     @Override
-    public void locationChanged(Location location)
+    public void atLocationChanged(Location location)
     {
+        // jätetään tyhjäksi
+    }
 
+    @Override
+    public void atMapReady(GoogleMap googleMap)
+    {
+        // jätetään tyhjäksi
     }
 
 

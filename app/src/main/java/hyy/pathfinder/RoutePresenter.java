@@ -3,11 +3,14 @@ package hyy.pathfinder;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.design.widget.AppBarLayout;
+import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -19,7 +22,12 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.PolylineOptions;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -39,11 +47,8 @@ import java.util.Random;
  * Created by h4211 on 10/11/2016.
  */
 
-public class RoutePresenter extends AppCompatActivity implements AsyncResponse, AppDataInterface{
-    public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
+public class RoutePresenter extends AppCompatActivity implements AsyncResponse, AppDataInterface {
 
-
-    private Marker mCurrLocationMarker;
     private List<String[]> trainData = new ArrayList<>();
     private List<String[]> trainDataTimeTableDeparture = new ArrayList<>();
     private List<String[]> trainDataTimeTableArrival = new ArrayList<>();
@@ -77,6 +82,14 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
 
         // asetetaan delegaatti, jotta callbackit palautuvat tälle aktiviteetille
         ApplicationData.setApplicationDataCallbacksDelegate(this);
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        mapFragment.getMapAsync(ApplicationData.applicationDataCallbacks);
+
+        //testing
+        //AppBarLayout layout = (AppBarLayout) findViewById(R.id.collapsing_toolbar);
+        //layout.setExpanded(true);
+        //layout.scroll
+
         // Get data from calling intent
         Bundle extras = getIntent().getExtras();
         origin = extras.getString("origin"); // street address
@@ -223,21 +236,34 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
 
 
     @Override
-    public void suspended(int errorCode)
+    public void atSuspended(int errorCode)
     {
 
     }
 
     @Override
-    public void connected(Bundle bundle)
+    public void atConnected(Bundle bundle)
     {
 
     }
 
     @Override
-    public void locationChanged(Location location)
+    public void atLocationChanged(Location location)
     {
 
+    }
+
+    @Override
+    public void atMapReady(GoogleMap googleMap)
+    {
+        ApplicationData.mMap = googleMap;
+        ApplicationData.mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+        if (ApplicationData.checkLocationPermission(RoutePresenter.this) && ApplicationData.deviceLocationIsUsable)
+        {
+            ApplicationData.mMap.setMyLocationEnabled(true);
+        }
+
+        ShowTestRouteInMap();
     }
 
 
@@ -440,6 +466,32 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
 
     }
 
+    // näytetään annetun route-objektilistan kokonaisreitti kartalla
+    protected void ShowRouteInMap(List<Route> routes)
+    {
+        PolylineOptions polylineOptions = new PolylineOptions();
+        for(int i = 0; i<routes.size();i++)
+        {
+            // kannattaako fiksata päällekkäisten koordinaattien syntyminen?
+            polylineOptions.add(routes.get(i).origin);
+            polylineOptions.add(routes.get(i).destination);
+        }
+        polylineOptions.width(5).color(Color.RED);
+        ApplicationData.mMap.addPolyline(polylineOptions);
+    }
+
+    protected void ShowTestRouteInMap()
+    {
+        LatLng c1 = new LatLng(51.11,10);
+        LatLng c2 = new LatLng(51.9,10.1);
+        LatLng c3 = new LatLng(51.5,9.9);
+
+        PolylineOptions options = new PolylineOptions();
+        options.add(c1).add(c2).add(c3);
+        options.width(10);
+        options.color(Color.RED);
+        ApplicationData.mMap.addPolyline(options);
+    }
 
 
 }

@@ -16,6 +16,7 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.GoogleMap;
 
 /**
  * Created by H8244 on 10/28/2016.
@@ -30,11 +31,16 @@ public class ApplicationData extends Application
     public static LocationRequest mLocationRequest;
     public static LocationListener locationListener;
     public static ApplicationDataCallbacks applicationDataCallbacks;
+    public static GoogleMap mMap;
+    public static boolean deviceLocationIsUsable;
 
-    // Pitää ajaa setLocationListener(), createLocationRequest() ja buildGoogleApiClient, setApplicationCallbacks() ja viimeisenä setLocationListener() (vaatii setApplicationDataCallbacks() ajon ensin)
+
+    // Pitää ajaa getApplicationContext(), setApplicationDataCallbacks(), setApplicationDataCallbacksDelegate, setLocationListener(), buildGoogleApiClient ja viimeisenä createLocationRequest() (järjestys oleellinen, nullpointerit herkässä)
     // kerran mistä tahansa ja muuttujat ovat valmiita käytettäväksi.
-    // Tämän luokan onCreatessa se ei toimi, koska luokasta ei koskaan tehdä insanssia - sen toimintoja käytetään vain staattisten funktioiden ja muuttujien kautta.
+    // Tämän luokan onCreatessa homma ei toimi, koska luokasta ei koskaan tehdä insanssia - sen toimintoja käytetään vain staattisten funktioiden ja muuttujien kautta.
     // Aina kun siirrytään uuteen aktiviteettiin täytyy asettaa se aktiviteetti delegaatiksi jolle interface paiskaa vastuun callbackista
+
+    // TODO: kun painetaan back nappulaa ja siirrytään aktiviteeteissa taaksepäin, niin delegaatti pitää uudelleenasettaa jotenkin edeltävään aktiviteettiin
 
 
     public static void setApplicationDataCallbacks()
@@ -44,6 +50,11 @@ public class ApplicationData extends Application
         applicationDataCallbacks = new ApplicationDataCallbacks();
     }
 
+    public static void setGoogleMap(GoogleMap googleMap)
+    {
+        mMap = googleMap;
+    }
+
     public static void setLocationListener()
     {
 
@@ -51,7 +62,7 @@ public class ApplicationData extends Application
         ApplicationData.locationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
-                applicationDataCallbacks.delegate.locationChanged(location);
+                applicationDataCallbacks.delegate.atLocationChanged(location);
             }
         };
     }
