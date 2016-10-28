@@ -21,51 +21,69 @@ import com.google.android.gms.location.LocationServices;
  * Created by H8244 on 10/28/2016.
  */
 
-public class ApplicationData extends Application implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener
+public class ApplicationData extends Application
 {
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
     public static GoogleApiClient mGoogleApiClient;
-    public Context mContext;
-    private static Location mLastLocation;
-    private static LocationRequest mLocationRequest;
-    private static LocationListener locationListener;
+    public static Context mContext;
+    public static Location mLastLocation;
+    public static LocationRequest mLocationRequest;
+    public static LocationListener locationListener;
+    public static ApplicationDataCallbacks applicationDataCallbacks;
+
+    // Pitää ajaa setLocationListener(), createLocationRequest() ja buildGoogleApiClient, setApplicationCallbacks() ja viimeisenä setLocationListener() (vaatii setApplicationDataCallbacks() ajon ensin)
+    // kerran mistä tahansa ja muuttujat ovat valmiita käytettäväksi.
+    // Tämän luokan onCreatessa se ei toimi, koska luokasta ei koskaan tehdä insanssia - sen toimintoja käytetään vain staattisten funktioiden ja muuttujien kautta.
+    // Aina kun siirrytään uuteen aktiviteettiin täytyy asettaa se aktiviteetti delegaatiksi jolle interface paiskaa vastuun callbackista
 
 
-    @Override
-    public void onCreate()
+    public static void setApplicationDataCallbacks()
     {
-        super.onCreate();
-        Log.d("onCreate", "Getting application context");
-        mContext = getApplicationContext();
-        Log.d("onCreate", "Adding location listener");
 
-        locationListener = new LocationListener() {
+        Log.d("ApplicationData", "setApplicationDataCallbacks");
+        applicationDataCallbacks = new ApplicationDataCallbacks();
+    }
+
+    public static void setLocationListener()
+    {
+
+        Log.d("ApplicationData", "setLocationListener");
+        ApplicationData.locationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
-                // Mitä tehdään kun lokaatio muuttuu? Tehdäänkö mitään?
+                applicationDataCallbacks.delegate.locationChanged(location);
             }
         };
-        Log.d("onCreate", "Building googleApiClient");
-        buildGoogleApiClient();
-        Log.d("onCreate", "Creating location request");
-        createLocationRequest();
+    }
+
+    public static void setApplicationDataCallbacksDelegate(AppDataInterface Delegate)
+    {
+        Log.d("ApplicationData", "setting delegate");
+        applicationDataCallbacks.delegate = Delegate;
     }
 
 
     public static void startLocationUpdates(Activity activity)
     {
+
+        Log.d("ApplicationData", "startLocationUpdates");
         if(checkLocationPermission(activity)) {
+
+            Log.d("ApplicationData", "permission granted, updating location");
             LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, locationListener);
         }
     }
 
     protected static void stopLocationUpdates() {
+
+        Log.d("ApplicationData", "stopLocationServices");
         LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, locationListener);
     }
 
 
     public static void getLastLocation(Activity activity)
     {
+        Log.d("ApplicationData", "getLastLocation");
         if(checkLocationPermission(activity)) {
             mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
         }
@@ -101,7 +119,9 @@ public class ApplicationData extends Application implements GoogleApiClient.Conn
         }
     }
 
-    protected void createLocationRequest() {
+    public static void createLocationRequest() {
+
+        Log.d("ApplicationData", "createLocationRequest");
         mLocationRequest = new LocationRequest();
         mLocationRequest.setInterval(10000);
         mLocationRequest.setFastestInterval(5000);
@@ -109,19 +129,12 @@ public class ApplicationData extends Application implements GoogleApiClient.Conn
     }
 
 
-    protected synchronized void buildGoogleApiClient() {
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
+    public static synchronized void buildGoogleApiClient(Activity activity) {
+        Log.d("ApplicationData", "buildGoogleApiClient");
+        mGoogleApiClient = new GoogleApiClient.Builder(activity)
+                .addConnectionCallbacks(applicationDataCallbacks)
                 .addApi(LocationServices.API)
                 .build();
+        mGoogleApiClient.connect();
     }
-
-
-    @Override
-    public void onConnectionSuspended(int i) {}
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {}
-    @Override
-    public void onConnected(Bundle bundle) {}
 }

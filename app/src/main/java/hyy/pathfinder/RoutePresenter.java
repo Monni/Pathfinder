@@ -39,11 +39,10 @@ import java.util.Random;
  * Created by h4211 on 10/11/2016.
  */
 
-public class RoutePresenter extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener, AsyncResponse{
+public class RoutePresenter extends AppCompatActivity implements AsyncResponse, AppDataInterface{
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
-    private LocationRequest mLocationRequest;
-    private GoogleApiClient mGoogleApiClient;
-    private Location mLastLocation;
+
+
     private Marker mCurrLocationMarker;
     private List<String[]> trainData = new ArrayList<>();
     private List<String[]> trainDataTimeTableDeparture = new ArrayList<>();
@@ -76,6 +75,8 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_routepresenter);
 
+        // asetetaan delegaatti, jotta callbackit palautuvat tälle aktiviteetille
+        ApplicationData.setApplicationDataCallbacksDelegate(this);
         // Get data from calling intent
         Bundle extras = getIntent().getExtras();
         origin = extras.getString("origin"); // street address
@@ -88,9 +89,6 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
         destination = extras.getString("destination");
         useMyLocation = extras.getBoolean("useMyLocation");
 
-        // build Google API client
-        buildGoogleApiClient();
-        mGoogleApiClient.connect();
 
 
         // Main logic //////////////
@@ -188,9 +186,9 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
         router.delegate = RoutePresenter.this;
 
         if (useMyLocation) {
-            foundOriginStation = findClosestStationFromPoint(mLastLocation); // Find closest train station from origin
+            foundOriginStation = findClosestStationFromPoint(ApplicationData.mLastLocation); // Find closest train station from origin
             String originStationLocation = (foundOriginStation[1] +","+ foundOriginStation[2]); // Get Latitude and Longitude from found closest station and convert into a string
-            String originLocTemp = (mLastLocation.getLatitude() +","+ mLastLocation.getLongitude()); // Convert user location from Location to String
+            String originLocTemp = (ApplicationData.mLastLocation.getLatitude() +","+ ApplicationData.mLastLocation.getLongitude()); // Convert user location from Location to String
             /* KLUP tää alempi tieto pitäs tallentaa johonkin ja käyttää sitä searchDirectTrackConnectionissa plus-aikana?! */
             router.getTravelDistanceAndDuration(originLocTemp, originStationLocation, getBaseContext()); // Get dist&dur from user location to closest station
         } else {
@@ -221,6 +219,25 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
             e.printStackTrace();
         }
         return point;
+    }
+
+
+    @Override
+    public void suspended(int errorCode)
+    {
+
+    }
+
+    @Override
+    public void connected(Bundle bundle)
+    {
+
+    }
+
+    @Override
+    public void locationChanged(Location location)
+    {
+
     }
 
 
@@ -296,38 +313,6 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
     }
 
 
-    @Override
-    public void onLocationChanged(Location location){}
-
-
-    @Override
-    public void onConnected(Bundle bundle) {
-        createLocationRequest();
-        if(useMyLocation)
-        {
-            if (LocationPermissionAgent.isLocationEnabled(getBaseContext()))
-            {
-                // tutkittava myöhemmin paremman/tarkemman paikannuksen mahdollisuuksia
-               /* ProviderLocationTracker GpsProviderLocationTracker = new ProviderLocationTracker(getApplicationContext(), ProviderLocationTracker.ProviderType.GPS);
-                GpsProviderLocationTracker.start();*/
-                startLocationUpdates();
-                getLastLocation();
-                origin = String.valueOf(mLastLocation.getLatitude()) + "," + String.valueOf(mLastLocation.getLongitude());
-            //    findRoute(origin, destination); tarvitaanko?!
-            }
-            else
-            {
-                PermissionDialogFragment permissionDialogFragment = new PermissionDialogFragment();
-                permissionDialogFragment.show(getSupportFragmentManager(),"permissionRequest");
-            }
-        }
-        else
-        {
-            //findRoute(origin, destination); tarvitaanko?!
-        }
-    }
-
-
     // tälle lista koordinaatteja tai osoitteita (tai molempia) joilla kutsutaan forloopissa getRoutea. getRoute tuottaa listan route-objekteja getRouteFinishissä
     public void getFullRoute(List<List<String>> coordinates)
     {
@@ -344,75 +329,6 @@ public class RoutePresenter extends AppCompatActivity implements GoogleApiClient
             new Router(this).getRoute(coordinates.get(i).get(0), coordinates.get(i).get(1), getBaseContext(), i);
         }
     }
-
-
-    protected void startLocationUpdates()
-    {
-        if (checkLocationPermission())
-        {
-            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
-        }
-    }
-
-
-    protected void getLastLocation()
-    {
-        if(checkLocationPermission())
-        {
-            mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        }
-    }
-
-
-    public boolean checkLocationPermission(){
-        if (ContextCompat.checkSelfPermission(this,
-                android.Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            // Asking user if explanation is needed
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                    android.Manifest.permission.ACCESS_FINE_LOCATION)) {
-                // Show an expanation to the user *asynchronously* -- don't block
-                // this thread waiting for the user's response! After the user
-                // sees the explanation, try again to request the permission.
-
-                //Prompt the user once explanation has been shown
-                ActivityCompat.requestPermissions(this,
-                        new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
-                        MY_PERMISSIONS_REQUEST_LOCATION);
-
-            } else {
-                // No explanation needed, we can request the permission.
-                ActivityCompat.requestPermissions(this,
-                        new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
-                        MY_PERMISSIONS_REQUEST_LOCATION);
-            }
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-
-    protected void createLocationRequest() {
-        mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(10000);
-        mLocationRequest.setFastestInterval(5000);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
-    }
-
-
-    protected synchronized void buildGoogleApiClient() {
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .build();
-    }
-    @Override
-    public void onConnectionSuspended(int i) {}
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {}
 
 
     protected void searchDirectTrackConnection(JSONArray json) {
