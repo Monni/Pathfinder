@@ -65,6 +65,7 @@ public class AsyncJsonFetcher extends AsyncTask<String, Void, JSONArray> {
         this.execute(url);
     }
     public void fetchTrains(String url) {
+        Log.d("fetchTrains","started");
         mode = 2;
        //AsyncJsonFetcher asyncJsonFetcher = new AsyncJsonFetcher(delegate);
         //asyncJsonFetcher.execute(url);
@@ -73,6 +74,6 @@ public class AsyncJsonFetcher extends AsyncTask<String, Void, JSONArray> {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Log.d("fetchTrains","called");
+
     }
 }

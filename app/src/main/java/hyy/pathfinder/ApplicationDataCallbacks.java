@@ -3,6 +3,7 @@ package hyy.pathfinder;
 import android.location.Location;
 import android.os.Bundle;
 
+import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.maps.GoogleMap;
@@ -12,7 +13,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
  * Created by Prometheus on 28-Oct-16.
  */
 
-public class ApplicationDataCallbacks implements GoogleApiClient.ConnectionCallbacks, LocationListener, OnMapReadyCallback {
+public class ApplicationDataCallbacks implements GoogleApiClient.ConnectionCallbacks, LocationListener, GoogleApiClient.OnConnectionFailedListener, OnMapReadyCallback {
 
     public AppDataInterface delegate = null;
 
@@ -26,6 +27,12 @@ public class ApplicationDataCallbacks implements GoogleApiClient.ConnectionCallb
     public void onConnected(Bundle bundle)
     {
         delegate.atConnected(bundle);
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult)
+    {
+        delegate.atConnectionFailed(connectionResult);
     }
 
     @Override

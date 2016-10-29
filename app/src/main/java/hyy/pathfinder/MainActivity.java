@@ -9,8 +9,10 @@ import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Switch;
+import android.widget.Toast;
 
 
+import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.maps.GoogleMap;
 
 import java.text.DecimalFormat;
@@ -34,7 +36,7 @@ public class MainActivity extends AppCompatActivity implements AppDataInterface 
         // Ainoastaan setApplicationCallbacksDelegate täytyy asettaa uudelleen kun siirrytään uuteen aktiviteettiin. Kyseisen aktiviteetin on implementoitava AppDataInterface.
         ApplicationData.mContext = getApplicationContext();
         ApplicationData.setApplicationDataCallbacks();
-        // implementoitava AppDataInterface kutsuvaan luokkaan ennen kuin delegaatin asetus toimii
+        // implementoitava AppDataInterface tähän luokkaan ennen kuin delegaatin asetus toimii
         ApplicationData.setApplicationDataCallbacksDelegate(this);
         ApplicationData.setLocationListener();
         ApplicationData.buildGoogleApiClient(this);
@@ -43,7 +45,7 @@ public class MainActivity extends AppCompatActivity implements AppDataInterface 
         //------------------------APPLICATIONDATAN SETUPPAUS-----------------------//
 
 
-        Switch gpsSwitch = (Switch) findViewById(R.id.gpsSwitch);
+        final Switch gpsSwitch = (Switch) findViewById(R.id.gpsSwitch);
         gpsSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener()
         {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
@@ -54,6 +56,7 @@ public class MainActivity extends AppCompatActivity implements AppDataInterface 
                     Log.d("In onCheckedChanged", "first");
                     PermissionDialogFragment permissionDialogFragment = new PermissionDialogFragment();
                     permissionDialogFragment.show(getSupportFragmentManager(),"permissionRequest");
+                    gpsSwitch.setChecked(false);
                 }
                 else if(isChecked == true && LocationPermissionAgent.isLocationEnabled(getBaseContext()) == true)
                 {
@@ -61,7 +64,6 @@ public class MainActivity extends AppCompatActivity implements AppDataInterface 
                     ApplicationData.getLastLocation(MainActivity.this);
                     EditText etOrigin = (EditText) findViewById(R.id.etOrigin);
                     etOrigin.setEnabled(false);
-                    ApplicationData.startLocationUpdates(MainActivity.this);
                     ApplicationData.deviceLocationIsOrigin = true;
                 }
                 else if(isChecked == false)
@@ -118,13 +120,23 @@ public class MainActivity extends AppCompatActivity implements AppDataInterface 
     @Override
     public void atSuspended(int errorCode)
     {
-        // jätetään tyhjäksi
+        Toast.makeText(getApplicationContext(), "CONNECTION SUSPENDED, MAIN", Toast.LENGTH_LONG);
+        Log.d("atSuspended", "CONNECTION SUSPENDED");
     }
 
     @Override
     public void atConnected(Bundle bundle)
     {
-        // jätetään tyhjäksi
+        Toast.makeText(getApplicationContext(), "CONNECTED, MAIN", Toast.LENGTH_LONG);
+        Log.d("atConnected", "CONNECTED SUCCESFULLY");
+        ApplicationData.startLocationUpdates(MainActivity.this);
+    }
+
+    @Override
+    public void atConnectionFailed(ConnectionResult connectionResult)
+    {
+        Toast.makeText(getApplicationContext(), "CONNECTION FAILED, MAIN", Toast.LENGTH_LONG);
+        Log.d("atConnectionFailed", "CONNECTION FAILED");
     }
 
     @Override

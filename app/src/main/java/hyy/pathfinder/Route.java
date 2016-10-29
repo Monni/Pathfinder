@@ -10,6 +10,8 @@ import com.google.android.gms.maps.model.PolylineOptions;
  * Created by Prometheus on 11-Oct-16.
  */
 
+// TODO: Routelle lisättävä tieto siitä monesko se on listassa ja monenteenko listaan se kuuluu
+
 public class Route
 {
     public LatLng origin;
@@ -21,6 +23,7 @@ public class Route
     public String originAddress;
     public String destinationAddress;
     public int index;
+    public int listIndex;
     public String url;
 
     public Route(){}
@@ -42,6 +45,7 @@ public class Route
         duration = Duration;
         distance = Distance;
         url = "";
+
 
         CreatePolyline();
     }

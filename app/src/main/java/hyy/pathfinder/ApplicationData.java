@@ -18,6 +18,8 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.GoogleMap;
 
+import java.util.List;
+
 /**
  * Created by H8244 on 10/28/2016.
  */
@@ -35,14 +37,14 @@ public class ApplicationData extends Application
     public static ApplicationDataCallbacks applicationDataCallbacks;
     public static GoogleMap mMap;
     public static boolean deviceLocationIsOrigin;
+    public static List<Route> routes; // testaukseen. Myöhemmin luultavasti tarvitaan List<List<Route>> routes
 
 
     // Pitää ajaa getApplicationContext(), setApplicationDataCallbacks(), setApplicationDataCallbacksDelegate, setLocationListener(), buildGoogleApiClient ja viimeisenä createLocationRequest() (järjestys oleellinen, nullpointerit herkässä)
-    // kerran mistä tahansa ja muuttujat ovat valmiita käytettäväksi.
     // Tämän luokan onCreatessa homma ei toimi, koska luokasta ei koskaan tehdä insanssia - sen toimintoja käytetään vain staattisten funktioiden ja muuttujien kautta.
-    // Aina kun siirrytään uuteen aktiviteettiin täytyy asettaa se aktiviteetti delegaatiksi jolle interface paiskaa vastuun callbackista
+    // Aina kun siirrytään uuteen aktiviteettiin täytyy asettaa se aktiviteetti delegaatiksi jolle interface paiskaa vastuun callbackista, pysäyttää edellisen mGoogleApiClientin updatet ja luoda uusi googleApiClient uudelle aktiviteetille
 
-    // TODO: kun painetaan back nappulaa ja siirrytään aktiviteeteissa taaksepäin, niin delegaatti pitää uudelleenasettaa jotenkin edeltävään aktiviteettiin
+    // TODO: kun painetaan back nappulaa ja siirrytään aktiviteeteissa taaksepäin, niin delegaatti pitää uudelleenasettaa jotenkin edeltävään aktiviteettiin ja googleapiclient uusia. Voisiko onBackPressed callbackia hyödyntää?
 
 
     public static void setApplicationDataCallbacks()
