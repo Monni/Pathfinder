@@ -11,10 +11,13 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -49,6 +52,8 @@ import java.util.Random;
 
 public class RoutePresenter extends AppCompatActivity implements AsyncResponse, AppDataInterface {
 
+    // Siirrä kaikki muuttujat ApplicationDataan staattisiksi muuttujiksi joita tarvisee kuljettaa aktiviteetista toiseen
+
     private List<String[]> trainData = new ArrayList<>();
     private List<String[]> trainDataTimeTableDeparture = new ArrayList<>();
     private List<String[]> trainDataTimeTableArrival = new ArrayList<>();
@@ -66,7 +71,6 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
     private Date originTime;
     private String originDate;
     private String destination;
-    private Boolean useMyLocation;
     private List<String[]> stationData = new ArrayList<>(); // get info from current stations. Name, shortCode, latitude and longitude
 
     private String[] foundOriginStation;
@@ -80,19 +84,62 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_routepresenter);
 
+      // Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+       // toolbar.setTitle("");
+
         // asetetaan delegaatti, jotta callbackit palautuvat tälle aktiviteetille
         ApplicationData.setApplicationDataCallbacksDelegate(this);
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(ApplicationData.applicationDataCallbacks);
 
-        //testing
-        //AppBarLayout layout = (AppBarLayout) findViewById(R.id.collapsing_toolbar);
-        //layout.setExpanded(true);
-        //layout.scroll
+        // Asetetaan kuuntelija collapsingToolbarLayoutille, jotta saadaan title piiloon kun kartta tulee esiin
+
+        final CollapsingToolbarLayout collapsingToolbarLayout = (CollapsingToolbarLayout) findViewById(R.id.collapsingToolbarLayout);
+        final AppBarLayout appbarLayout = (AppBarLayout)findViewById(R.id.appBarLayout);
+
+        appbarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
+            boolean isShow = false;
+            int scrollRange = -1;
+
+            @Override
+            public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
+                if (scrollRange == -1) {
+                    scrollRange = appBarLayout.getTotalScrollRange();
+                }
+                if (scrollRange + verticalOffset == 0) {
+                    collapsingToolbarLayout.setTitle("Select preferred route");
+                    isShow = true;
+                } else if(isShow) {
+                    collapsingToolbarLayout.setTitle(" ");//carefull there should a space between double quote otherwise it wont work
+                    isShow = false;
+                }
+            }
+        });
+
+        // kuuntelija kelluvalle napille - myöhemmin tarpeeton. Esimerkkinä siitä kuinka toolbar collapsataan onclickillä cardien karttaa varten
+
+        FloatingActionButton fab = (FloatingActionButton)findViewById(R.id.fab);
+
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (appbarLayout.getTop() < 0)
+                    appbarLayout.setExpanded(true);
+                else
+                    appbarLayout.setExpanded(false);
+            }
+        });
+
+
 
         // Get data from calling intent
         Bundle extras = getIntent().getExtras();
-        origin = extras.getString("origin"); // street address
+        if(!ApplicationData.deviceLocationIsOrigin)
+        {
+            origin = extras.getString("origin");// street address
+        }
+
+
         originDate = extras.getString("originDate");
         try {
             originTime = timeFormat.parse(extras.getString("originTime"));
@@ -100,7 +147,6 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
             e.printStackTrace();
         }
         destination = extras.getString("destination");
-        useMyLocation = extras.getBoolean("useMyLocation");
 
 
 
@@ -154,6 +200,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         }
     });
 
+
     @Override
     public void onAsyncJsonFetcherComplete(int mode, JSONArray json){
         Message message = handler.obtainMessage();
@@ -198,7 +245,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         Router router = new Router();
         router.delegate = RoutePresenter.this;
 
-        if (useMyLocation) {
+        if (ApplicationData.deviceLocationIsOrigin) {
             foundOriginStation = findClosestStationFromPoint(ApplicationData.mLastLocation); // Find closest train station from origin
             String originStationLocation = (foundOriginStation[1] +","+ foundOriginStation[2]); // Get Latitude and Longitude from found closest station and convert into a string
             String originLocTemp = (ApplicationData.mLastLocation.getLatitude() +","+ ApplicationData.mLastLocation.getLongitude()); // Convert user location from Location to String
@@ -258,12 +305,10 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
     {
         ApplicationData.mMap = googleMap;
         ApplicationData.mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
-        if (ApplicationData.checkLocationPermission(RoutePresenter.this) && ApplicationData.deviceLocationIsUsable)
+        if (ApplicationData.checkLocationPermission(RoutePresenter.this))
         {
             ApplicationData.mMap.setMyLocationEnabled(true);
         }
-
-        ShowTestRouteInMap();
     }
 
 
@@ -469,29 +514,11 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
     // näytetään annetun route-objektilistan kokonaisreitti kartalla
     protected void ShowRouteInMap(List<Route> routes)
     {
-        PolylineOptions polylineOptions = new PolylineOptions();
+
         for(int i = 0; i<routes.size();i++)
         {
-            // kannattaako fiksata päällekkäisten koordinaattien syntyminen?
-            polylineOptions.add(routes.get(i).origin);
-            polylineOptions.add(routes.get(i).destination);
+            ApplicationData.mMap.addPolyline(routes.get(i).polylineOptions);
         }
-        polylineOptions.width(5).color(Color.RED);
-        ApplicationData.mMap.addPolyline(polylineOptions);
+
     }
-
-    protected void ShowTestRouteInMap()
-    {
-        LatLng c1 = new LatLng(51.11,10);
-        LatLng c2 = new LatLng(51.9,10.1);
-        LatLng c3 = new LatLng(51.5,9.9);
-
-        PolylineOptions options = new PolylineOptions();
-        options.add(c1).add(c2).add(c3);
-        options.width(10);
-        options.color(Color.RED);
-        ApplicationData.mMap.addPolyline(options);
-    }
-
-
 }

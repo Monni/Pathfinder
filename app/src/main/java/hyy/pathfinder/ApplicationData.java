@@ -24,6 +24,8 @@ import com.google.android.gms.maps.GoogleMap;
 
 public class ApplicationData extends Application
 {
+    // ALUSTA TÄNNE TARPEELLISET MUUTTUJAT. HUOM STATIC KEYWORD
+
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
     public static GoogleApiClient mGoogleApiClient;
     public static Context mContext;
@@ -32,7 +34,7 @@ public class ApplicationData extends Application
     public static LocationListener locationListener;
     public static ApplicationDataCallbacks applicationDataCallbacks;
     public static GoogleMap mMap;
-    public static boolean deviceLocationIsUsable;
+    public static boolean deviceLocationIsOrigin;
 
 
     // Pitää ajaa getApplicationContext(), setApplicationDataCallbacks(), setApplicationDataCallbacksDelegate, setLocationListener(), buildGoogleApiClient ja viimeisenä createLocationRequest() (järjestys oleellinen, nullpointerit herkässä)

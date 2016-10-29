@@ -67,7 +67,7 @@ public class DataParser {
 
 
 
-
+    // Tarpeeton?
     public List<String> parseTotalDistanceAndDuration(JSONObject jObject)
     {
         List<String> list = new ArrayList<>();

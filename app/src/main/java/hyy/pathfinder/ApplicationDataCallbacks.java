@@ -29,7 +29,7 @@ public class ApplicationDataCallbacks implements GoogleApiClient.ConnectionCallb
     }
 
     @Override
-    public  void onConnectionSuspended(int errorCode)
+    public void onConnectionSuspended(int errorCode)
     {
         delegate.atSuspended(errorCode);
     }

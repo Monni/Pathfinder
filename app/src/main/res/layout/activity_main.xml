@@ -61,14 +61,6 @@
             android:id="@+id/btnMap"
             android:layout_gravity="center_horizontal" />
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="New Button"
-            android:onClick="testJSON"
-            android:id="@+id/btnJSON"
-            android:layout_gravity="center_horizontal" />
-
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -78,7 +70,7 @@
 
 
 
-        //miikalta
+        <!--miikalta-->
         <EditText
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

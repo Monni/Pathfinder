@@ -1,5 +1,6 @@
 package hyy.pathfinder;
 
+import android.graphics.Color;
 import android.location.Location;
 
 import com.google.android.gms.maps.model.LatLng;
@@ -41,8 +42,17 @@ public class Route
         duration = Duration;
         distance = Distance;
         url = "";
+
+        CreatePolyline();
     }
 
+    protected void CreatePolyline()
+    {
+        polylineOptions = new PolylineOptions();
+        polylineOptions.add(origin);
+        polylineOptions.add(destination);
+        polylineOptions.width(5).color(Color.RED);
+    }
 
 }
 

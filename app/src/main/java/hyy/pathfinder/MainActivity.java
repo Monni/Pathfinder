@@ -27,6 +27,8 @@ public class MainActivity extends AppCompatActivity implements AppDataInterface 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        //------------------------APPLICATIONDATAN SETUPPAUS-----------------------//
+
         // HUOM SEURAAVA AJOJÄRJESTYS KRIITTINEN!
         // Tätä ApplicationData.asdf -möykkyä ei tarvitse ajaa uudelleen ohjelman ajon aikana.
         // Ainoastaan setApplicationCallbacksDelegate täytyy asettaa uudelleen kun siirrytään uuteen aktiviteettiin. Kyseisen aktiviteetin on implementoitava AppDataInterface.
@@ -38,6 +40,7 @@ public class MainActivity extends AppCompatActivity implements AppDataInterface 
         ApplicationData.buildGoogleApiClient(this);
         ApplicationData.createLocationRequest();
 
+        //------------------------APPLICATIONDATAN SETUPPAUS-----------------------//
 
 
         Switch gpsSwitch = (Switch) findViewById(R.id.gpsSwitch);
@@ -59,11 +62,11 @@ public class MainActivity extends AppCompatActivity implements AppDataInterface 
                     EditText etOrigin = (EditText) findViewById(R.id.etOrigin);
                     etOrigin.setEnabled(false);
                     ApplicationData.startLocationUpdates(MainActivity.this);
-                    ApplicationData.deviceLocationIsUsable = true;
+                    ApplicationData.deviceLocationIsOrigin = true;
                 }
                 else if(isChecked == false)
                 {
-                    ApplicationData.deviceLocationIsUsable = false;
+                    ApplicationData.deviceLocationIsOrigin = false;
                     Log.d("In onCheckedChanged", "third");
                     EditText etOrigin = (EditText) findViewById(R.id.etOrigin);
                     etOrigin.setEnabled(true);
@@ -186,12 +189,10 @@ public class MainActivity extends AppCompatActivity implements AppDataInterface 
         EditText etDestination = (EditText) findViewById(R.id.etDestination);
         Switch gpsSwitch = (Switch) findViewById(R.id.gpsSwitch);
         String origin;
-        boolean useMyLocation = false;
 
-        if(gpsSwitch.isChecked())
+        if(ApplicationData.deviceLocationIsOrigin)
         {
-            origin = "my_location";
-            useMyLocation = true;
+            origin = "deviceLocation";
         }
         else {
             origin = etOrigin.getText().toString();
@@ -203,7 +204,6 @@ public class MainActivity extends AppCompatActivity implements AppDataInterface 
         intent.putExtra("originDate", originDate);
         intent.putExtra("originTime", originTime);
         intent.putExtra("destination", destination);
-        intent.putExtra("useMyLocation", useMyLocation);
 
         startActivity(intent);
     }
