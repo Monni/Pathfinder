@@ -15,6 +15,6 @@ public interface AsyncResponse
 {
     void getRouteFinish(Route route);
     void getTotalDistanceAndDurationFinish(Route route);
-    void onAsyncJsonFetcherComplete(int mode, JSONArray json);
-
+    void onAsyncJsonFetcherComplete(int mode, JSONArray json, boolean jsonException);
+    //void getBusRouteFinish(Route route);
 }

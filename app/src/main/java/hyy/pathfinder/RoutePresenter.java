@@ -53,16 +53,17 @@ import java.util.Random;
  */
 
 // TODO: Tehtävä järkevä route-objektien luonti suhteessa löydettyjen kokonaisreittivaihtoehtojen määrään.
+// TODO: Keksittävä miten haetaan reittivaihtoehtoja
 // TODO: Tehtävä recyclerview, adapteri ja korttinäkymä kokonaisreittivaihtoehdoille
 
 public class RoutePresenter extends AppCompatActivity implements AsyncResponse, AppDataInterface {
 
     // Siirrä kaikki muuttujat ApplicationDataan staattisiksi muuttujiksi joita tarvisee kuljettaa aktiviteetista toiseen
-    boolean doooEeeeet;
+    boolean listIsComplete;
     private List<String[]> trainData = new ArrayList<>();
     private List<String[]> trainDataTimeTableDeparture = new ArrayList<>();
     private List<String[]> trainDataTimeTableArrival = new ArrayList<>();
-    private List<List<Route>> routes = new ArrayList<>();
+   // private List<List<Route>> routes = new ArrayList<>();
    // private int pendingRoutes = 0;
     private ProgressDialog progressDialog;
 //    private String stationStartShortCode = "";
@@ -166,9 +167,8 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         message.what = 0;
         handler.sendMessage(message);
         Log.d("Handler Message", message.toString());
-        ApplicationData.routes = new ArrayList<>();
-
-
+        ApplicationData.routeListList = new ArrayList<>();
+        ApplicationData.routeListList.add(new ArrayList<Route>());
     }
 
     private Handler handler = new Handler(new Handler.Callback() {
@@ -177,7 +177,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
 
             switch(msg.what){
                 case 0:     /// Fetch and parse current train stations from digitraffic
-                    Log.d("Handler.what = 0", "Fetching stations");
+                    Log.d("Handler.what = 0", "Fetching stationlist");
                     Log.d("JSON query URL","http://rata.digitraffic.fi/api/v1/metadata/stations.json");
 
                     AsyncJsonFetcher asyncStationFetcher = new AsyncJsonFetcher(RoutePresenter.this);
@@ -196,51 +196,6 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                     asyncTrainFetcher.fetchTrains("http://rata.digitraffic.fi/api/v1/schedules?departure_station="
                             + foundOriginStation[0] + "&arrival_station=" + foundDestinationStation[0] + "&departure_date=" + originDate);
 
-
-                    //---------------- ALUSTAVA KOODI TESTAUKSEEN-----------------------//
-                    Router router = new Router();
-                    router.delegate = RoutePresenter.this;
-
-                    Log.d("Handler","Creating route 0");
-
-                    // tehdään reittiobjekti laitteen lokaatiosta lähimmälle asemalle
-                    if(ApplicationData.deviceLocationIsOrigin)
-                    {
-
-                        router.getRoute(String.valueOf(ApplicationData.mLastLocation.getLatitude())+","+String.valueOf(ApplicationData.mLastLocation.getLongitude()), foundOriginStation[1]+","+foundOriginStation[2],context,0);
-                    }
-                    else
-                    {
-                        router.getRoute(origin, foundOriginStation[1]+","+foundOriginStation[2],context,0);
-                    }
-
-                    // tehdään reittiobjekti lähimmältä asemalta kohdetta lähimmälle asemalle. Ei käytetä routeria koska se etsii reitin autoteitä pitkin. Halutaan linnuntie alustavasti.
-                    Log.d("Handler","Creating route 1");
-                    Double tempLat = Double.parseDouble(foundOriginStation[1]);
-                    Double tempLng = Double.parseDouble(foundOriginStation[2]);
-                    LatLng originLatLng = new LatLng(tempLat, tempLng);
-                    tempLat = Double.parseDouble(foundDestinationStation[1]);
-                    tempLng = Double.parseDouble(foundDestinationStation[2]);
-                    LatLng destinationLatLng = new LatLng(tempLat, tempLng);
-                    Route stationToStationRoute = new Route(originLatLng, destinationLatLng, "", "", 0,0);
-                    try
-                    {
-                        ApplicationData.routes.add(1,stationToStationRoute);
-                    }
-                    catch (IndexOutOfBoundsException e)
-                    {
-                        ApplicationData.routes.add(stationToStationRoute);
-                    }
-                    router = new Router();
-                    router.delegate = RoutePresenter.this;
-                    // tehdään reittiobjekti kohdetta lähimmältä asemalta kohteeseen
-                    Log.d("Handler","Creating route 2");
-                    router.getRoute(foundDestinationStation[1]+","+foundDestinationStation[2], destination,context,2);
-
-
-                    //---------------- ALUSTAVA KOODI TESTAUKSEEN-----------------------//
-
-
                     break;
                 case 2:
                     Log.d("Handler.what = 2", "Searching for direct track connections between found stations");
@@ -253,9 +208,8 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         }
     });
 
-
     @Override
-    public void onAsyncJsonFetcherComplete(int mode, JSONArray json){
+    public void onAsyncJsonFetcherComplete(int mode, JSONArray json, boolean jsonException){
         Message message = handler.obtainMessage();
         switch (mode) {
             case 1:
@@ -278,6 +232,24 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                 Log.d("Handler Message", message.toString());
                 break;
             case 2:
+                // tarkistus löysikö AsyncJsonFetcher.
+                if(!jsonException)
+                {
+                    // Tekee kävelyreitin aloituspaikasta lähtöasemalle, lähtöasemalta suora viiva kohdeasemalle ja lopulta kävelyreitti kohdeasemalta kohteeseen
+                    Log.d("Handler", "Trains found, creating route using them along with walking route");
+                    createWalkingRoute();
+                    createRoutesUsingStations();
+                    createBusRoute();
+                }
+                else
+                {
+                    // Tekee kävelyreitin alkupisteestä kohteeseen
+                    Log.d("Handler", "No trains found, only adding walking route");
+                    createWalkingRoute();
+                    createBusRoute();
+
+                }
+
                 // Fetch Trains
                 Log.d("AsyncTask finished", "trainDataTask");
                 trainJSON = json;
@@ -318,6 +290,99 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         Location destinationLocation = getLocationFromAddress(destination); // Convert given destination address to Location (lat&long)
         foundDestinationStation = findClosestStationFromPoint(destinationLocation); // Find closest train station from destination
     }
+
+    // suora reitti kohteeseen
+    public void createWalkingRoute()
+    {
+        Router router = new Router();
+        router.delegate = this;
+        if(ApplicationData.deviceLocationIsOrigin)
+        {
+            router.getWalkingRoute(String.valueOf(ApplicationData.mLastLocation.getLatitude())+","+String.valueOf(ApplicationData.mLastLocation.getLongitude()), destination,context,0, 0);
+        }
+        else
+        {
+            router.getWalkingRoute(origin, destination,context,0, 0);
+        }
+    }
+
+    public void createBusRoute()
+    {
+        Router router = new Router();
+        router.delegate = this;
+        if(ApplicationData.deviceLocationIsOrigin)
+        {
+            router.getBusRoute(String.valueOf(ApplicationData.mLastLocation.getLatitude())+","+String.valueOf(ApplicationData.mLastLocation.getLongitude()), destination,context,0, 2);
+        }
+        else
+        {
+            router.getBusRoute(origin, destination,context,0, 2);
+        }
+    }
+
+    // -------TESTAUKSEEN-------- //
+    public void createRoutesUsingStations()
+    {
+        // tarvitaan toinen lista routesListListin sisälle näitä varten, koska tämä on erillinen reittikokonaisuus
+        ApplicationData.routeListList.add(new ArrayList<Route>());
+        // myöhemmin keksittävä malli joka tekee uusia listoja oikean määrän suhteessa kokonaisreittien määrään. Nyt aluksi toimitaan kahdella; suora kävelymatka kohteeseen ja matka juna-asemien kautta kohteeseen
+
+
+        Router router = new Router();
+        router.delegate = RoutePresenter.this;
+
+        Log.d("Handler","Creating route 0");
+
+        // tehdään reittiobjekti laitteen lokaatiosta lähimmälle asemalle
+        if(ApplicationData.deviceLocationIsOrigin)
+        {
+            router.getWalkingRoute(String.valueOf(ApplicationData.mLastLocation.getLatitude())+","+String.valueOf(ApplicationData.mLastLocation.getLongitude()), foundOriginStation[1]+","+foundOriginStation[2],context,0, 1);
+        }
+        else
+        {
+            router.getWalkingRoute(origin, foundOriginStation[1]+","+foundOriginStation[2],context,0, 1);
+        }
+
+        // tehdään reittiobjekti lähimmältä asemalta kohdetta lähimmälle asemalle. Ei käytetä routeria koska se etsii reitin teitä pitkin. Halutaan linnuntie alustavasti.
+        Log.d("Handler","Creating route 1");
+        Double tempLat = Double.parseDouble(foundOriginStation[1]);
+        Double tempLng = Double.parseDouble(foundOriginStation[2]);
+        LatLng originLatLng = new LatLng(tempLat, tempLng);
+        tempLat = Double.parseDouble(foundDestinationStation[1]);
+        tempLng = Double.parseDouble(foundDestinationStation[2]);
+        LatLng destinationLatLng = new LatLng(tempLat, tempLng);
+        // annetaan tälle reitille tyhjät osoitteet ja nollat pituuteen ja kestoon koska se on linnuntie.
+        Route stationToStationRoute = new Route(originLatLng, destinationLatLng, "", "", 0,0);
+        stationToStationRoute.listIndex = 1;
+        stationToStationRoute.index = 1;
+        stationToStationRoute.polylineOptions.color(Color.YELLOW);
+
+        try
+        {
+            ApplicationData.routeListList.add(1,new ArrayList<Route>());
+        }
+        catch (IndexOutOfBoundsException e)
+        {
+            Log.d("Handler", "IndexOutOfBoundsException at adding list");
+            ApplicationData.routeListList.add(new ArrayList<Route>());
+        }
+        try
+        {
+            ApplicationData.routeListList.get(1).add(1,stationToStationRoute);
+        }
+        catch (IndexOutOfBoundsException e)
+        {
+            Log.d("Handler", "IndexOutOfBoundsException at adding route");
+            ApplicationData.routeListList.get(1).add(stationToStationRoute);
+        }
+        ShowRouteInMap(stationToStationRoute);
+        // tehdään reittiobjekti kohdetta lähimmältä asemalta kohteeseen
+        router = new Router();
+        router.delegate = RoutePresenter.this;
+        Log.d("Handler","Creating route 2");
+        router.getWalkingRoute(foundDestinationStation[1]+","+foundDestinationStation[2], destination,context,2, 1);
+    }
+
 
 
     // Convert given street address into latitude and longitude
@@ -435,51 +500,48 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
 
     @Override
     public void getRouteFinish(Route route) {
-        // jos route on koko reitin ensimmäinen pätkä, niin lisätään uusi lista routesiin ja laitetaan uuteen listaan route
-      /*  if(route.index == 0)
+        // mätetään reitti listaan oikealle paikalleen. jos reitti oli kokonaisreitin viimeinen puuttuva osa, niin piirretään koko reitti kartalle.
+        if(ApplicationData.routeListList.size() < route.listIndex)
         {
-            List<Route> routeList = new ArrayList<>();
-            routeList.add(route.index,route);
-            routes.add(routeList);
-
+            Log.d("getWalkingRouteFinish", "List size smaller than intended index at adding list");
+            ApplicationData.routeListList.add(new ArrayList<Route>());
         }
-        // jos ei, niin lisätään route routesin viimeiseen olemassaolevaan listaan jatkoksi
         else
         {
-            routes.get(routes.size()-1).add(route.index,route);
+            ApplicationData.routeListList.add(route.listIndex, new ArrayList<Route>());
         }
-        pendingRoutes--;*/
 
         try
         {
-            ApplicationData.routes.add(route.index,route);
+            ApplicationData.routeListList.get(route.listIndex).add(route.index,route);
         }
         catch(IndexOutOfBoundsException e)
         {
-            ApplicationData.routes.add(route);
+            Log.d("getWalkingRouteFinish", "IndexOutOfBoundsException at adding route. Adding to the end of the list.");
+            ApplicationData.routeListList.get(route.listIndex).add(route);
         }
 
-        // --------------- TESTIKOODIA PIIRTÄMISTÄ VARTEN ---------------- //
-        Log.d("getRouteFinish", "ROUTE " + route.index + " CREATED");
-        doooEeeeet = true;
+        Log.d("getRouteFinish", "ROUTE " + route.index + " CREATED FOR LIST " + route.listIndex);
+        ShowRouteInMap(route);
+
+        /*
+        listIsComplete = true;
         int i;
-        for(i = 0; i<ApplicationData.routes.size();i++)
+        for(i = 0; i<ApplicationData.routeListList.get(route.listIndex).size();i++)
         {
-            if (ApplicationData.routes.get(i) == null) {
-                doooEeeeet = false;
+            if (ApplicationData.routeListList.get(route.listIndex).get(i) == null) {
+                listIsComplete = false;
             }
         }
+        // paska varmistus, tehtävä parempi myöhemmin
         if (i != 2)
         {
-            doooEeeeet = false;
+            listIsComplete = false;
         }
-        if(doooEeeeet)
+        if(listIsComplete)
         {
-            ShowRouteInMap(ApplicationData.routes);
-        }
-        // --------------- TESTIKOODIA PIIRTÄMISTÄ VARTEN ---------------- //
-
-
+            ShowRouteInMap(ApplicationData.routeListList.get(route.listIndex));
+        }*/
     }
 
 
@@ -610,16 +672,10 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
 
     }
 
-    // näytetään annetun route-objektilistan kokonaisreitti kartalla
-    protected void ShowRouteInMap(List<Route> routes)
+    // näytetään annettu route-objektin kartalla
+    protected void ShowRouteInMap(Route route)
     {
-
-        Log.d("ShowRouteInMap","Drawing routes");
-        for(int i = 0; i<routes.size();i++)
-        {
-            Log.d("ShowRouteInMap","Drawing route" + i);
-            ApplicationData.mMap.addPolyline(routes.get(i).polylineOptions);
-        }
-
+        Log.d("ShowRouteInMap","Drawing route " + route.index + " in list "+ route.listIndex);
+        ApplicationData.mMap.addPolyline(route.polylineOptions);
     }
 }

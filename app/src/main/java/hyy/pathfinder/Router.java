@@ -37,15 +37,29 @@ public class Router extends AsyncTask<Route, Void, Route>
     @Override
     protected Route doInBackground(Route... r) {
         try {
+
             FetchUrl fetchUrl = new FetchUrl();
             String jsonString = fetchUrl.downloadUrl(r[0].url);
             JSONObject jObject = new JSONObject(jsonString);
             DataParser parser = new DataParser();
             Route route = parser.parseJsonToRoute(jObject);
+            route.index = r[0].index;
+            route.listIndex = r[0].listIndex;
             List<List<HashMap<String, String>>> linelist = parser.parseLineList(jObject);
             PolylineOptions pOptions = getDrawnRoute(linelist);
             route.polylineOptions = pOptions;
-            route.index = r[0].index;
+            switch(route.listIndex)
+            {
+                case 0:
+                    route.polylineOptions.color(Color.RED);
+                    break;
+                case 1:
+                    route.polylineOptions.color(Color.YELLOW);
+                    break;
+                case 2:
+                    route.polylineOptions.color(Color.BLUE);
+                    break;
+            }
             return route;
         }
         catch (IOException e)
@@ -105,8 +119,7 @@ public class Router extends AsyncTask<Route, Void, Route>
 
             // Adding all the points in the route to LineOptions
             lineOptions.addAll(points);
-            lineOptions.width(10);
-            lineOptions.color(Color.RED);
+            lineOptions.width(5);
         }
 
         return lineOptions;
@@ -115,17 +128,25 @@ public class Router extends AsyncTask<Route, Void, Route>
 
     public void getTravelDistanceAndDuration(String origin, String destination, Context context)
     {
-        String urlString = "https://maps.googleapis.com/maps/api/directions/json?origin=" + origin + "&destination=" + destination + "&key=" + context.getResources().getString(R.string.google_maps_key);
+        String urlString = "https://maps.googleapis.com/maps/api/directions/json?origin=" + origin + "&destination=" + destination + "&mode=walking&key=" + context.getResources().getString(R.string.google_maps_key);
         mode = 1;
         Route route = new Route(urlString);
         this.execute(route);
     }
 
-    public void getRoute(String origin, String destination, Context context, int index)
+    public void getWalkingRoute(String origin, String destination, Context context, int index, int listIndex)
     {
-        String urlString = "https://maps.googleapis.com/maps/api/directions/json?origin=" + origin + "&destination=" + destination + "&key=" + context.getResources().getString(R.string.google_maps_key);
+        String urlString = "https://maps.googleapis.com/maps/api/directions/json?origin=" + origin + "&destination=" + destination + "&mode=walking&key=" + context.getResources().getString(R.string.google_maps_key);
         mode = 2;
-        Route route = new Route(urlString, index);
+        Route route = new Route(urlString, index, listIndex);
+        this.execute(route);
+    }
+
+    public void getBusRoute(String origin, String destination, Context context, int index, int listIndex)
+    {
+        String urlString = "https://maps.googleapis.com/maps/api/directions/json?origin=" + origin + "&destination=" + destination + "&mode=transit&key=" + context.getResources().getString(R.string.google_maps_key);
+        mode = 2;
+        Route route = new Route(urlString, index, listIndex);
         this.execute(route);
     }
 }

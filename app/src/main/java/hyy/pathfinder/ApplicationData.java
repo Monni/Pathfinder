@@ -37,7 +37,8 @@ public class ApplicationData extends Application
     public static ApplicationDataCallbacks applicationDataCallbacks;
     public static GoogleMap mMap;
     public static boolean deviceLocationIsOrigin;
-    public static List<Route> routes; // testaukseen. Myöhemmin luultavasti tarvitaan List<List<Route>> routes
+   // public static List<Route> routeList;
+    public static List<List<Route>> routeListList;
 
 
     // Pitää ajaa getApplicationContext(), setApplicationDataCallbacks(), setApplicationDataCallbacksDelegate, setLocationListener(), buildGoogleApiClient ja viimeisenä createLocationRequest() (järjestys oleellinen, nullpointerit herkässä)

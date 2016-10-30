@@ -19,6 +19,7 @@ import java.net.URL;
 
 public class AsyncJsonFetcher extends AsyncTask<String, Void, JSONArray> {
     private int mode;
+    private boolean jsonException = false;
     public AsyncResponse delegate = null;
     public AsyncJsonFetcher(AsyncResponse Delegate)
     {
@@ -43,6 +44,7 @@ public class AsyncJsonFetcher extends AsyncTask<String, Void, JSONArray> {
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (JSONException e) {
+                jsonException = true;
                 e.printStackTrace();
             } finally {
                 if (urlConnection != null) urlConnection.disconnect();
@@ -53,7 +55,7 @@ public class AsyncJsonFetcher extends AsyncTask<String, Void, JSONArray> {
         protected void onPostExecute(JSONArray json) {
             Log.d("asyncJsonFetcher", "onPostExecute, mode "+mode);
             if (json != null) {
-                delegate.onAsyncJsonFetcherComplete(mode, json); // calls AsyncResponse.java interface
+                delegate.onAsyncJsonFetcherComplete(mode, json, jsonException); // calls AsyncResponse.java interface
             } else {
                 Log.d("asyncJsonFetcher", "JSONArray null");
             }

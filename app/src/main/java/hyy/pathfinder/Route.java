@@ -10,7 +10,7 @@ import com.google.android.gms.maps.model.PolylineOptions;
  * Created by Prometheus on 11-Oct-16.
  */
 
-// TODO: Routelle lisättävä tieto siitä monesko se on listassa ja monenteenko listaan se kuuluu
+
 
 public class Route
 {
@@ -31,10 +31,12 @@ public class Route
     {
         url = Url;
     }
-    public Route(String Url, int Index)
+    // routen täytyy tietää mihin listaan (kokonaisreittiin, listIndex) se kuuluu ja monesko se on siinä listassa (monesko osa kokonaisreittiä, index)
+    public Route(String Url, int Index, int ListIndex)
     {
         index = Index;
         url = Url;
+        listIndex = ListIndex;
     }
     public Route(LatLng Origin, LatLng Destination, String OriginAddress,String DestinationAddress, Integer Duration, Integer Distance)
     {
@@ -46,7 +48,6 @@ public class Route
         distance = Distance;
         url = "";
 
-
         CreatePolyline();
     }
 
@@ -55,7 +56,6 @@ public class Route
         polylineOptions = new PolylineOptions();
         polylineOptions.add(origin);
         polylineOptions.add(destination);
-        polylineOptions.width(5).color(Color.RED);
     }
 
 }
