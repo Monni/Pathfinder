@@ -84,7 +84,11 @@ public class Router extends AsyncTask<Route, Void, Route>
                 break;
             case 2:
                 // halutaan piirretty reitti paikasta A paikkaan B
-                delegate.getRouteFinish(r);
+                delegate.getWalkingRouteFinish(r);
+                break;
+            case 3:
+                // halutaan piirretty reitti paikasta A paikkaan B
+                delegate.getBusRouteFinish(r);
                 break;
             default:
                 throw new NullPointerException("No mode selected for Router");
@@ -145,7 +149,7 @@ public class Router extends AsyncTask<Route, Void, Route>
     public void getBusRoute(String origin, String destination, Context context, int index, int listIndex)
     {
         String urlString = "https://maps.googleapis.com/maps/api/directions/json?origin=" + origin + "&destination=" + destination + "&mode=transit&key=" + context.getResources().getString(R.string.google_maps_key);
-        mode = 2;
+        mode = 3;
         Route route = new Route(urlString, index, listIndex);
         this.execute(route);
     }

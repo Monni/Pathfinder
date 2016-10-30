@@ -52,7 +52,6 @@ import java.util.Random;
  * Created by h4211 on 10/11/2016.
  */
 
-// TODO: Tehtävä järkevä route-objektien luonti suhteessa löydettyjen kokonaisreittivaihtoehtojen määrään.
 // TODO: Keksittävä miten haetaan reittivaihtoehtoja
 // TODO: Tehtävä recyclerview, adapteri ja korttinäkymä kokonaisreittivaihtoehdoille
 
@@ -60,6 +59,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
 
     // Siirrä kaikki muuttujat ApplicationDataan staattisiksi muuttujiksi joita tarvisee kuljettaa aktiviteetista toiseen
     boolean listIsComplete;
+
     private List<String[]> trainData = new ArrayList<>();
     private List<String[]> trainDataTimeTableDeparture = new ArrayList<>();
     private List<String[]> trainDataTimeTableArrival = new ArrayList<>();
@@ -308,8 +308,10 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
 
     public void createBusRoute()
     {
+        // bussimatka
         Router router = new Router();
         router.delegate = this;
+
         if(ApplicationData.deviceLocationIsOrigin)
         {
             router.getBusRoute(String.valueOf(ApplicationData.mLastLocation.getLatitude())+","+String.valueOf(ApplicationData.mLastLocation.getLongitude()), destination,context,0, 2);
@@ -320,7 +322,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         }
     }
 
-    // -------TESTAUKSEEN-------- //
+
     public void createRoutesUsingStations()
     {
         // tarvitaan toinen lista routesListListin sisälle näitä varten, koska tämä on erillinen reittikokonaisuus
@@ -499,7 +501,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
 
 
     @Override
-    public void getRouteFinish(Route route) {
+    public void getWalkingRouteFinish(Route route) {
         // mätetään reitti listaan oikealle paikalleen. jos reitti oli kokonaisreitin viimeinen puuttuva osa, niin piirretään koko reitti kartalle.
         if(ApplicationData.routeListList.size() < route.listIndex)
         {
@@ -542,6 +544,27 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         {
             ShowRouteInMap(ApplicationData.routeListList.get(route.listIndex));
         }*/
+    }
+
+    @Override
+    public void getBusRouteFinish(Route route)
+    {
+        // bussireitti valmis, tehdään kävelyteitti lähtöpysäkille lähtöpisteestä
+        Router router = new Router();
+        router.delegate = this;
+        if(ApplicationData.deviceLocationIsOrigin)
+        {
+            router.getWalkingRoute(String.valueOf(ApplicationData.mLastLocation.getLatitude())+","+String.valueOf(ApplicationData.mLastLocation.getLongitude()),String.valueOf(route.origin.latitude)+","+String.valueOf(route.origin.longitude),getBaseContext(),1,2);
+        }
+        else
+        {
+            router.getWalkingRoute(origin,String.valueOf(route.origin.latitude)+","+String.valueOf(route.origin.longitude),getBaseContext(),1,2);
+        }
+
+        // ja kävelyreitti päätepysäkiltä kohteeseen
+        router = new Router();
+        router.delegate = this;
+        router.getWalkingRoute(String.valueOf(route.destination.latitude)+","+String.valueOf(route.destination.longitude),destination,getBaseContext(),1,2);
     }
 
 

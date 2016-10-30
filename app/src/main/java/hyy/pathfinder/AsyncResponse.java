@@ -13,8 +13,8 @@ import java.util.List;
 
 public interface AsyncResponse
 {
-    void getRouteFinish(Route route);
+    void getWalkingRouteFinish(Route route);
     void getTotalDistanceAndDurationFinish(Route route);
     void onAsyncJsonFetcherComplete(int mode, JSONArray json, boolean jsonException);
-    //void getBusRouteFinish(Route route);
+    void getBusRouteFinish(Route route);
 }
