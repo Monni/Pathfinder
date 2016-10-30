@@ -27,10 +27,13 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.PolylineOptions;
 
@@ -124,9 +127,9 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
 
         // kuuntelija kelluvalle napille - myöhemmin tarpeeton. Esimerkkinä siitä kuinka toolbar collapsataan onclickillä cardien karttaa varten
 
-        FloatingActionButton fab = (FloatingActionButton)findViewById(R.id.fab);
+        FloatingActionButton fabRight = (FloatingActionButton)findViewById(R.id.fabRight);
 
-        fab.setOnClickListener(new View.OnClickListener() {
+        fabRight.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (appbarLayout.getTop() < 0)
@@ -137,6 +140,14 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         });
 
 
+        FloatingActionButton fabLeft = (FloatingActionButton)findViewById(R.id.fabLeft);
+
+        fabLeft.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                setMapBounds();
+            }
+        });
 
         // Get data from calling intent
         Bundle extras = getIntent().getExtras();
@@ -291,6 +302,9 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         foundDestinationStation = findClosestStationFromPoint(destinationLocation); // Find closest train station from destination
     }
 
+    // ---------------------------------- NÄMÄ TEKEVÄT ROUTERIA HYÖDYNTÄEN ROUTE-OBJEKTIT --------------------------------- //
+    // createWalkingRouter, createBusRoute ja createRoutesUsingStations
+
     // suora reitti kohteeseen
     public void createWalkingRoute()
     {
@@ -309,15 +323,20 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
     public void createBusRoute()
     {
         // bussimatka
+        Log.d("createBusRoute", "Creating station to station -route");
         Router router = new Router();
         router.delegate = this;
 
         if(ApplicationData.deviceLocationIsOrigin)
         {
+            Log.d("createBusRoute", "Using device location as reference point");
+
             router.getBusRoute(String.valueOf(ApplicationData.mLastLocation.getLatitude())+","+String.valueOf(ApplicationData.mLastLocation.getLongitude()), destination,context,0, 2);
         }
         else
         {
+            Log.d("createBusRoute", "Using typed start location");
+
             router.getBusRoute(origin, destination,context,0, 2);
         }
     }
@@ -405,6 +424,24 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         return point;
     }
 
+    public void setMapBounds()
+    {
+        LatLngBounds.Builder builder = new LatLngBounds.Builder();
+        for (int i = 0; i < ApplicationData.routeListList.size();i++)
+        {
+            for(int j = 0;j<ApplicationData.routeListList.get(i).size();i++)
+            {
+                builder.include(ApplicationData.routeListList.get(i).get(j).origin);
+                builder.include(ApplicationData.routeListList.get(i).get(j).destination);
+            }
+        }
+
+        LatLngBounds bounds = builder.build();
+
+        int padding = 80; // offset from edges of the map in pixels
+        CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+        ApplicationData.mMap.animateCamera(cu);
+    }
 
     @Override
     public void atSuspended(int errorCode)
@@ -565,6 +602,8 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         router = new Router();
         router.delegate = this;
         router.getWalkingRoute(String.valueOf(route.destination.latitude)+","+String.valueOf(route.destination.longitude),destination,getBaseContext(),1,2);
+
+        ShowRouteInMap(route);
     }
 
 

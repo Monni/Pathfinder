@@ -40,6 +40,9 @@ public class Router extends AsyncTask<Route, Void, Route>
 
             FetchUrl fetchUrl = new FetchUrl();
             String jsonString = fetchUrl.downloadUrl(r[0].url);
+
+            Log.d("Router", "JSON for bus-query: " + jsonString);
+
             JSONObject jObject = new JSONObject(jsonString);
             DataParser parser = new DataParser();
             Route route = parser.parseJsonToRoute(jObject);
@@ -47,6 +50,7 @@ public class Router extends AsyncTask<Route, Void, Route>
             route.listIndex = r[0].listIndex;
             List<List<HashMap<String, String>>> linelist = parser.parseLineList(jObject);
             PolylineOptions pOptions = getDrawnRoute(linelist);
+            pOptions.width(5);
             route.polylineOptions = pOptions;
             switch(route.listIndex)
             {
@@ -64,11 +68,11 @@ public class Router extends AsyncTask<Route, Void, Route>
         }
         catch (IOException e)
         {
-            Log.d("Background Task", e.toString());
+            Log.d("Router", "Index: " + r[0].index + ", ListIndex: " + r[0].listIndex + ", exception: " + e.toString());
         }
         catch (JSONException e)
         {
-            Log.d("Background Task", e.toString());
+            Log.d("Router", "Index: " + r[0].index + ", ListIndex: " + r[0].listIndex + ", exception: " + e.toString());
         }
         return null;
     }
