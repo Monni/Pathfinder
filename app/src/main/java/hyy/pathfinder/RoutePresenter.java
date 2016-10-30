@@ -98,6 +98,11 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         ApplicationData.setApplicationDataCallbacksDelegate(this);
         ApplicationData.stopLocationUpdates();
         ApplicationData.buildGoogleApiClient(this);
+        if(ApplicationData.deviceLocationListeningPermitted)
+        {
+            Log.d("onCreate","Connecting googleapiclient");
+            ApplicationData.connectGoogleApiClient();
+        }
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(ApplicationData.applicationDataCallbacks);
 
@@ -273,7 +278,6 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                 Log.d("Async switch case", "mode incorrect");
                 break;
         }
-
     }
 
     private void findClosestStations() {
@@ -454,6 +458,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
     {
         Log.d("atConnected", "CONNECTED SUCCESFULLY IN ROUTEPRESENTER");
         ApplicationData.startLocationUpdates(this);
+        ApplicationData.getLastLocation(this);
     }
 
     @Override

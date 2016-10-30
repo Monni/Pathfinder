@@ -37,6 +37,7 @@ public class ApplicationData extends Application
     public static ApplicationDataCallbacks applicationDataCallbacks;
     public static GoogleMap mMap;
     public static boolean deviceLocationIsOrigin;
+    public static boolean deviceLocationListeningPermitted;
    // public static List<Route> routeList;
     //routeListListin ekaan taulukkopaikkaan tulee kävelyreittilista, toiseen junarettilista ja kolmanteen bussireittilista. Kävely punanen, juna keltanen ja bussi sininen.
     public static List<List<Route>> routeListList;
@@ -152,6 +153,10 @@ public class ApplicationData extends Application
                 .addConnectionCallbacks(applicationDataCallbacks)
                 .addApi(LocationServices.API)
                 .build();
+    }
+
+    public static void connectGoogleApiClient()
+    {
         mGoogleApiClient.connect();
     }
 }
