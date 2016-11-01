@@ -26,6 +26,7 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.fitness.data.Application;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
@@ -90,10 +91,12 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
     private JSONArray trainJSON;
 
     // MIIKAN TAIKAA
-    private List<Route> routeList;
+    private List<Route> routeList = new ArrayList<>();
     private RecyclerView recyclerView;
     private RecyclerView.Adapter adapter;
     private RecyclerView.LayoutManager layoutManager;
+
+    private Location destinationLocation;
     //
 
     @Override
@@ -101,13 +104,10 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_routepresenter);
 
-        // MIIKAN TAIKAA
         recyclerView = (RecyclerView) findViewById(R.id.route_recycler_view);
         recyclerView.setHasFixedSize(true);
         layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
-        //
-
 
         // asetettava delegaatti callbackeja varten, pysäytettävä edellisen googleapiclientin päivitykset ja luotava uusi googleapiclient uudelle aktiviteetille
         ApplicationData.setApplicationDataCallbacksDelegate(this);
@@ -139,7 +139,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                     collapsingToolbarLayout.setTitle("Select preferred route");
                     isShow = true;
                 } else if(isShow) {
-                    collapsingToolbarLayout.setTitle(" ");//carefull there should a space between double quote otherwise it wont work
+                    collapsingToolbarLayout.setTitle(" ");//careful there should a space between double quote otherwise it wont work
                     isShow = false;
                 }
             }
@@ -218,7 +218,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                     Log.d("Handler.what = 1", "Looking for closest stations");
                     findClosestStations(); // Find closest stations from origin and destination after stationDataTask finishes
 
-
+                    // Get JSON data from digitraffic (between found originStation and destinationStation
                     Log.d("JSON query URL", "http://rata.digitraffic.fi/api/v1/schedules?departure_station="
                             + foundOriginStation[0] + "&arrival_station=" + foundDestinationStation[0] + "&departure_date=" + originDate);
 
@@ -317,7 +317,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
             router.getTravelDistanceAndDuration(origin, originStationLocation, getBaseContext()); // Get dist&dur from given location to closest station KLUP!!! Tarviiko origin vaihtaa lat&long-stringiksi?
         }
         Log.d("findClosestStations","Fetching destination");
-        Location destinationLocation = getLocationFromAddress(destination); // Convert given destination address to Location (lat&long)
+        destinationLocation = getLocationFromAddress(destination); // Convert given destination address to Location (lat&long)
         foundDestinationStation = findClosestStationFromPoint(destinationLocation); // Find closest train station from destination
     }
 
@@ -649,7 +649,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
     protected void searchDirectTrackConnection(JSONArray json) {
         // Find text block to put data, JUST FOR DEBUGGING. FINAL DATA DERIVED THROUGH BUNDLES!(?)
         TextView textView = (TextView) findViewById(R.id.result1);
-        String text;
+       // String text;
         Bundle routeData = new Bundle();
         String[] scheduledTimeTemp;
         String[] scheduledDate;
@@ -745,14 +745,25 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
             routeData.putString("arrTrack", trainDataTimeTableArrival.get(0)[1]);
             routeData.putString("arrDate", trainDataTimeTableArrival.get(0)[2]);
             routeData.putString("arrTime", trainDataTimeTableArrival.get(0)[3]);
-            text = routeData.getString("trainType") + " " + routeData.getString("trainNumber") + "\n"
-                    + routeData.getString("depType") + " " + routeData.getString("depTrack") + " " + routeData.getString("depDate") + " " + routeData.getString("depTime") + "\n"
-                    + routeData.getString("arrType") + " " + routeData.getString("arrTrack") + " " + routeData.getString("arrDate") + " " + routeData.getString("arrTime") + "\n";
-            textView.setText(text);
+          //  text = routeData.getString("trainType") + " " + routeData.getString("trainNumber") + "\n"
+          //          + routeData.getString("depType") + " " + routeData.getString("depTrack") + " " + routeData.getString("depDate") + " " + routeData.getString("depTime") + "\n"
+          //          + routeData.getString("arrType") + " " + routeData.getString("arrTrack") + " " + routeData.getString("arrDate") + " " + routeData.getString("arrTime") + "\n";
+           // textView.setText(text);
 
         } else textView.setText("No direct trains today");
         Log.d("Function called", "Find closest station");
 
+        // MIIKAN TAIKAA
+        if (trainData.size() != 0) {
+            for(int index = 0; index < trainData.size(); index++) {
+                routeList.add(new Route(trainData.get(index)[0], trainData.get(index)[2], trainDataTimeTableDeparture.get(index)[0], trainDataTimeTableDeparture.get(index)[1],
+                        trainDataTimeTableDeparture.get(index)[2], trainDataTimeTableDeparture.get(index)[3], trainDataTimeTableArrival.get(index)[0], trainDataTimeTableArrival.get(index)[1],
+                        trainDataTimeTableArrival.get(index)[2], trainDataTimeTableArrival.get(index)[3]));
+            }
+        } else textView.setText("No direct trains today");
+        adapter = new routeAdapter(this, routeList);
+        recyclerView.setAdapter(adapter);
+        //
     }
 
     // näytetään annettu route-objektin kartalla

@@ -54,29 +54,39 @@ public class routeAdapter extends RecyclerView.Adapter<routeAdapter.ViewHolder> 
                 .override(250,170)
                 .into(viewHolder.kenttaImageView);
 */
-        viewHolder.originTextView.setText(route.originAddress);
-        viewHolder.destinationTextView.setText(route.destinationAddress);
-        viewHolder.durationTextView.setText(route.duration);
-        viewHolder.distanceTextView.setText(route.distance);
+        viewHolder.depDateTextView.setText(route.depDate);
+        viewHolder.depTimeTextView.setText(route.depTime);
+        viewHolder.depTrackTextView.setText(route.depTrack);
+        viewHolder.trainTypeTextView.setText(route.trainType);
+        viewHolder.trainNumberTextView.setText(route.trainNumber);
+        viewHolder.arrTimeTextView.setText(route.arrTime);
+        viewHolder.arrTrackTextView.setText(route.arrTrack);
+
     }
 
     // view holder class to specify card UI objects
     public class ViewHolder extends RecyclerView.ViewHolder {
         // each data item is just a string in this case
        // public ImageView kenttaImageView;
-        public TextView originTextView;
-        public TextView destinationTextView;
-        public TextView durationTextView;
-        public TextView distanceTextView;
+        public TextView depDateTextView;
+        public TextView depTimeTextView;
+        public TextView trainNumberTextView;
+        public TextView trainTypeTextView;
+        public TextView depTrackTextView;
+        public TextView arrTimeTextView;
+        public TextView arrTrackTextView;
 
         public ViewHolder (View itemView) {
             super (itemView);
             // get layout IDs
         //    kenttaImageView = (ImageView) itemView.findViewById(R.id.kenttaImageView);
-            originTextView = (TextView) itemView.findViewById(R.id.originTextView);
-            destinationTextView = (TextView) itemView.findViewById(R.id.destinationTextView);
-            durationTextView = (TextView) itemView.findViewById(R.id.durationTextView);
-            distanceTextView = (TextView) itemView.findViewById(R.id.distanceTextView);
+            depDateTextView = (TextView) itemView.findViewById(R.id.depDateTextView);
+            depTimeTextView = (TextView) itemView.findViewById(R.id.depTimeTextView);
+            trainNumberTextView = (TextView) itemView.findViewById(R.id.trainNumberTextView);
+            trainTypeTextView = (TextView) itemView.findViewById(R.id.trainTypeTextView);
+            depTrackTextView = (TextView) itemView.findViewById(R.id.depTrackTextView);
+            arrTimeTextView = (TextView) itemView.findViewById(R.id.arrTimeTextView);
+            arrTrackTextView = (TextView) itemView.findViewById(R.id.arrTrackTextView);
             // add click listener for a card
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -84,8 +94,7 @@ public class routeAdapter extends RecyclerView.Adapter<routeAdapter.ViewHolder> 
                     int position = getAdapterPosition();
                     Intent intent = new Intent(context, RouteDetail.class);
 
-
-                    view.getContext().startActivity(intent);
+                    //view.getContext().startActivity(intent);
                 }
             });
         }

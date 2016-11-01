@@ -27,6 +27,18 @@ public class Route
     public int index;
     public int listIndex;
     public String url;
+    public String originClosestStation;
+    public String destinationClosestStation;
+
+    public String trainNumber;
+    public String trainType;
+    public String depType;
+    public String depTrack;
+    public String depDate;
+    public String depTime;
+    public String arrType;
+    public String arrTrack;
+    public String arrTime;
 
 
     public Route(){}
@@ -41,7 +53,7 @@ public class Route
         url = Url;
         listIndex = ListIndex;
     }
-    public Route(LatLng Origin, LatLng Destination, String OriginAddress,String DestinationAddress, Integer Duration, Integer Distance)
+    public Route(LatLng Origin, LatLng Destination, String OriginAddress, String DestinationAddress, Integer Duration, Integer Distance)
     {
         origin = Origin;
         destination = Destination;
@@ -54,6 +66,26 @@ public class Route
         CreatePolyline();
     }
 
+    // MIIKAN TAIKAA
+    public Route(String trainNumber, String trainType, String depType, String depTrack, String depDate, String depTime, String arrType, String arrTrack,
+                 String arrDate, String arrTime) {
+        this.trainNumber = trainNumber;
+        this.trainType = trainType;
+        this.depType = depType;
+        this.depTrack = depTrack;
+        this.depDate = depDate;
+        this.depTime = depTime;
+        this.arrType = arrType;
+        this.arrTrack = arrTrack;
+        this.arrTime = arrTime;
+
+    }
+
+    public void addStop(){
+
+    }
+    //
+
     protected void CreatePolyline()
     {
         polylineOptions = new PolylineOptions();
@@ -61,9 +93,7 @@ public class Route
         polylineOptions.add(destination);
     }
 
-    public void addStop(){
 
-    }
 
 }
 

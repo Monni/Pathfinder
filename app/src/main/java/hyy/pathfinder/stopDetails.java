@@ -6,8 +6,10 @@ package hyy.pathfinder;
 
 public class stopDetails {
 // Tämä olio luodaan ja listataan jokaiselle pysäkille erikseen
+    public String type;
     public String origin;
     public String destination;
+    public String duration;
     public String track;
     public String departureTime;
     public String arrivalTime;
