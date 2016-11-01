@@ -16,6 +16,8 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
@@ -87,11 +89,24 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
 
     private JSONArray trainJSON;
 
+    // MIIKAN TAIKAA
+    private List<Route> routeList;
+    private RecyclerView recyclerView;
+    private RecyclerView.Adapter adapter;
+    private RecyclerView.LayoutManager layoutManager;
+    //
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_routepresenter);
+
+        // MIIKAN TAIKAA
+        recyclerView = (RecyclerView) findViewById(R.id.route_recycler_view);
+        recyclerView.setHasFixedSize(true);
+        layoutManager = new LinearLayoutManager(this);
+        recyclerView.setLayoutManager(layoutManager);
+        //
 
 
         // asetettava delegaatti callbackeja varten, pysäytettävä edellisen googleapiclientin päivitykset ja luotava uusi googleapiclient uudelle aktiviteetille
@@ -628,6 +643,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
             new Router(this).getRoute(coordinates.get(i).get(0), coordinates.get(i).get(1), getBaseContext(), i);
         }
     }*/
+
 
 
     protected void searchDirectTrackConnection(JSONArray json) {

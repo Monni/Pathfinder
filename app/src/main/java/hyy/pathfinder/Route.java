@@ -6,6 +6,8 @@ import android.location.Location;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.PolylineOptions;
 
+import java.util.List;
+
 /**
  * Created by Prometheus on 11-Oct-16.
  */
@@ -25,6 +27,7 @@ public class Route
     public int index;
     public int listIndex;
     public String url;
+
 
     public Route(){}
     public Route (String Url)
@@ -56,6 +59,10 @@ public class Route
         polylineOptions = new PolylineOptions();
         polylineOptions.add(origin);
         polylineOptions.add(destination);
+    }
+
+    public void addStop(){
+
     }
 
 }
