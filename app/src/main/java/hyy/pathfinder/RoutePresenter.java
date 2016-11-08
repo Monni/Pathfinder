@@ -111,13 +111,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
 
         // asetettava delegaatti callbackeja varten, pysäytettävä edellisen googleapiclientin päivitykset ja luotava uusi googleapiclient uudelle aktiviteetille
         ApplicationData.setApplicationDataCallbacksDelegate(this);
-        ApplicationData.stopLocationUpdates();
-        ApplicationData.buildGoogleApiClient(this);
-        if(ApplicationData.deviceLocationListeningPermitted)
-        {
-            Log.d("onCreate","Connecting googleapiclient");
-            ApplicationData.connectGoogleApiClient();
-        }
+
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(ApplicationData.applicationDataCallbacks);
 

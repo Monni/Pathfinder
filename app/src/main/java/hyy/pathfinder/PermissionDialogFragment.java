@@ -22,7 +22,6 @@ public class PermissionDialogFragment extends DialogFragment
                     {
                         Intent gpsOptionsIntent = new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
                         startActivity(gpsOptionsIntent);
-                        getActivity().finish();
                     }
                 })
                 .setNegativeButton("No, return", new DialogInterface.OnClickListener(){
