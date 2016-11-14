@@ -202,7 +202,7 @@ public class MainActivity extends AppCompatActivity implements AppDataInterface 
         Intent intent = new Intent(this, RoutePresenter.class);
         EditText etOrigin = (EditText) findViewById(R.id.etOrigin);
         EditText etDestination = (EditText) findViewById(R.id.etDestination);
-        Switch gpsSwitch = (Switch) findViewById(R.id.gpsSwitch);
+        //Switch gpsSwitch = (Switch) findViewById(R.id.gpsSwitch);
         String origin;
 
         if(ApplicationData.deviceLocationIsOrigin)
