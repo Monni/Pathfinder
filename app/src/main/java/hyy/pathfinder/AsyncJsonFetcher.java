@@ -69,8 +69,6 @@ public class AsyncJsonFetcher extends AsyncTask<String, Void, JSONArray> {
     public void fetchTrains(String url) {
         Log.d("fetchTrains","started");
         mode = 2;
-       //AsyncJsonFetcher asyncJsonFetcher = new AsyncJsonFetcher(delegate);
-        //asyncJsonFetcher.execute(url);
         try {
             this.execute(url);
         } catch (Exception e) {

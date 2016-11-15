@@ -42,6 +42,9 @@ public class ApplicationData extends Application
     //routeListListin ekaan taulukkopaikkaan tulee kävelyreittilista, toiseen junarettilista ja kolmanteen bussireittilista. Kävely punanen, juna keltanen ja bussi sininen.
     public static List<List<Route>> routeListList;
 
+    public static fullRoute masterRoute;
+    public static List<fullRoute> fullRouteList;
+
 
     // Pitää ajaa getApplicationContext(), setApplicationDataCallbacks(), setApplicationDataCallbacksDelegate, setLocationListener(), buildGoogleApiClient ja viimeisenä createLocationRequest() (järjestys oleellinen, nullpointerit herkässä)
     // Tämän luokan onCreatessa homma ei toimi, koska luokasta ei koskaan tehdä insanssia - sen toimintoja käytetään vain staattisten funktioiden ja muuttujien kautta.
