@@ -1,6 +1,0 @@
-<resources>
-    <string name="app_name">Pathfinder</string>
-    <string name="title_activity_maps">Map</string>
-    <string name="permission_dialog_title">Permission request</string>
-    <string name="permission_dialog_message">Application requires an access to the location of the device.\r\nGrant request?</string>
-</resources>
