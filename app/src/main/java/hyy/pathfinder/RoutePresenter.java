@@ -87,7 +87,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         setContentView(R.layout.activity_routepresenter);
 
         // Create RecyclerView and LayoutManager
-        recyclerView = (RecyclerView) findViewById(R.id.route_recycler_view);
+        recyclerView = (RecyclerView) findViewById(R.id.fullroute_recycler_view);
         recyclerView.setHasFixedSize(true);
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
@@ -151,19 +151,19 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         Bundle extras = getIntent().getExtras();
         if(!ApplicationData.deviceLocationIsOrigin)
         {
-            origin = extras.getString("origin");// street address
+           // origin = extras.getString("origin");// street address
             ApplicationData.masterRoute.setOriginAddress(extras.getString("origin")); /////////////////////////////////////////////////
         }
 
-        originDate = extras.getString("originDate");
+       // originDate = extras.getString("originDate");
         ApplicationData.masterRoute.setOriginDate(extras.getString("originDate")); //////////////////////////////////////////////////////
         try {
-            originTime = timeFormat.parse(extras.getString("originTime"));
+          //  originTime = timeFormat.parse(extras.getString("originTime"));
             ApplicationData.masterRoute.setOriginTime(timeFormat.parse(extras.getString("originTime")));////////////////////////////////////
         } catch (ParseException e) {
             e.printStackTrace();
         }
-        destination = extras.getString("destination"); // Street address
+        //destination = extras.getString("destination"); // Street address
         ApplicationData.masterRoute.setDestinationAddress(extras.getString("destination")); ////////////////////////////////////////////////
 
 
@@ -208,7 +208,9 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                     AsyncJsonFetcher asyncTrainFetcher = new AsyncJsonFetcher(RoutePresenter.this);
                     asyncTrainFetcher.delegate = RoutePresenter.this;
                     asyncTrainFetcher.fetchTrains("http://rata.digitraffic.fi/api/v1/schedules?departure_station="
-                            + foundOriginStation[0] + "&arrival_station=" + foundDestinationStation[0] + "&departure_date=" + originDate);
+                            + ApplicationData.masterRoute.getOriginClosestStation()[0] + "&arrival_station="
+                            + ApplicationData.masterRoute.getDestinationClosestStation()[0] + "&departure_date="
+                            + ApplicationData.masterRoute.getOriginDate());
 
                     break;
                 case 2:
@@ -288,31 +290,31 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         if (ApplicationData.deviceLocationIsOrigin) {
             Log.d("findClosestStations","Using device location for origin");
 
-            foundOriginStation = findClosestStationFromPoint(ApplicationData.mLastLocation); // Find closest train station from origin
+            //foundOriginStation = findClosestStationFromPoint(ApplicationData.mLastLocation); // Find closest train station from origin
             ////////////////////////////////////////////////////////////////////////////
-            ApplicationData.masterRoute.setOriginClosestStation(findClosestStationFromPoint(ApplicationData.mLastLocation));
-
-            String originStationLocation = (foundOriginStation[1] +","+ foundOriginStation[2]); // Get Latitude and Longitude from found closest station and convert into a string
+            ApplicationData.masterRoute.setOriginClosestStation(findClosestStationFromPoint(ApplicationData.mLastLocation)); // Find closest train station from origin
+            // Get Latitude and Longitude from found closest station and convert into a string
+            String originStationLocation = (ApplicationData.masterRoute.getOriginClosestStation()[1] +","+ ApplicationData.masterRoute.getOriginClosestStation()[2]);
             String originLocTemp = (ApplicationData.mLastLocation.getLatitude() +","+ ApplicationData.mLastLocation.getLongitude()); // Convert user location from Location to String
             /* KLUP tää alempi tieto pitäs tallentaa johonkin ja käyttää sitä searchDirectTrackConnectionissa plus-aikana?! */
             router.getTravelDistanceAndDuration(originLocTemp, originStationLocation, getBaseContext()); // Get dist&dur from user location to closest station
         } else {
             Log.d("findClosestStations","Using other than device location for origin");
-            Location mCustomLocation = getLocationFromAddress(origin); // Convert given address to Location (lat&long)
+            Location mCustomLocation = getLocationFromAddress(ApplicationData.masterRoute.getOriginAddress()); // Convert given address to Location (lat&long)
 
-            foundOriginStation = findClosestStationFromPoint(mCustomLocation); // Find closest train station from converted Location
+            //foundOriginStation = findClosestStationFromPoint(mCustomLocation);
             ///////////////////////////////////////////////////////////////////////////////////
-            ApplicationData.masterRoute.setOriginClosestStation(findClosestStationFromPoint(mCustomLocation));
-
-            String originStationLocation = (foundOriginStation[1] +","+ foundOriginStation[2]); // Get Latitude and Longitude from found closest station and convert into a string
+            ApplicationData.masterRoute.setOriginClosestStation(findClosestStationFromPoint(mCustomLocation)); // Find closest train station from converted Location
+            // Get Latitude and Longitude from found closest station and convert into a string
+            String originStationLocation = (ApplicationData.masterRoute.getOriginClosestStation()[1] +","+ ApplicationData.masterRoute.getOriginClosestStation()[2]);
             /* KLUP tää alempi tieto pitäs tallentaa johonkin ja käyttää sitä searchDirectTrackConnectionissa plus-aikana?! */
-            router.getTravelDistanceAndDuration(origin, originStationLocation, getBaseContext()); // Get dist&dur from given location to closest station KLUP!!! Tarviiko origin vaihtaa lat&long-stringiksi?
+            router.getTravelDistanceAndDuration(ApplicationData.masterRoute.getOriginAddress(), originStationLocation, getBaseContext()); // Get dist&dur from given location to closest station KLUP!!! Tarviiko origin vaihtaa lat&long-stringiksi?
         }
 
 
         Log.d("findClosestStations","Fetching destination");
-        Location destinationLocation = getLocationFromAddress(destination); // Convert given destination address to Location (lat&long)
-        foundDestinationStation = findClosestStationFromPoint(destinationLocation); // Find closest train station from destination
+       // Location destinationLocation = getLocationFromAddress(destination); // Convert given destination address to Location (lat&long)
+       // foundDestinationStation = findClosestStationFromPoint(destinationLocation); // Find closest train station from destination
         //////////////////////////////////////////////////////////////////////////
         ApplicationData.masterRoute.setDestinationLocation(getLocationFromAddress(ApplicationData.masterRoute.getDestinationAddress()));
         ApplicationData.masterRoute.setDestinationClosestStation(findClosestStationFromPoint(ApplicationData.masterRoute.getDestinationLocation()));
@@ -371,15 +373,16 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
     // suora reitti kohteeseen
     public void createWalkingRoute()
     {
+        Log.d("createWalkingRoute","Started");
         Router router = new Router();
         router.delegate = this;
         if(ApplicationData.deviceLocationIsOrigin)
         {
-            router.getWalkingRoute(String.valueOf(ApplicationData.mLastLocation.getLatitude())+","+String.valueOf(ApplicationData.mLastLocation.getLongitude()), destination,context,0, 0);
+            router.getWalkingRoute(String.valueOf(ApplicationData.mLastLocation.getLatitude())+","+String.valueOf(ApplicationData.mLastLocation.getLongitude()), ApplicationData.masterRoute.getDestinationAddress(), context,0, 0);
         }
         else
         {
-            router.getWalkingRoute(origin, destination,context,0, 0);
+            router.getWalkingRoute(ApplicationData.masterRoute.getOriginAddress(), ApplicationData.masterRoute.getDestinationAddress(), context,0, 0);
         }
     }
 
@@ -394,13 +397,13 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         {
             Log.d("createBusRoute", "Using device location as reference point");
 
-            router.getBusRoute(String.valueOf(ApplicationData.mLastLocation.getLatitude())+","+String.valueOf(ApplicationData.mLastLocation.getLongitude()), destination,context,0, 2);
+            router.getBusRoute(String.valueOf(ApplicationData.mLastLocation.getLatitude())+","+String.valueOf(ApplicationData.mLastLocation.getLongitude()), ApplicationData.masterRoute.getDestinationAddress(), context,0, 2);
         }
         else
         {
             Log.d("createBusRoute", "Using typed start location");
 
-            router.getBusRoute(origin, destination,context,0, 2);
+            router.getBusRoute(ApplicationData.masterRoute.getOriginAddress(), ApplicationData.masterRoute.getDestinationAddress(), context,0, 2);
         }
     }
 
@@ -420,20 +423,20 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         // tehdään reittiobjekti laitteen lokaatiosta lähimmälle asemalle
         if(ApplicationData.deviceLocationIsOrigin)
         {
-            router.getWalkingRoute(String.valueOf(ApplicationData.mLastLocation.getLatitude())+","+String.valueOf(ApplicationData.mLastLocation.getLongitude()), foundOriginStation[1]+","+foundOriginStation[2],context,0, 1);
+            router.getWalkingRoute(String.valueOf(ApplicationData.mLastLocation.getLatitude())+","+String.valueOf(ApplicationData.mLastLocation.getLongitude()), ApplicationData.masterRoute.getOriginClosestStation()[1]+","+ApplicationData.masterRoute.getOriginClosestStation()[2],context,0, 1);
         }
         else
         {
-            router.getWalkingRoute(origin, foundOriginStation[1]+","+foundOriginStation[2],context,0, 1);
+            router.getWalkingRoute(ApplicationData.masterRoute.getOriginAddress(), ApplicationData.masterRoute.getOriginClosestStation()[1]+","+ApplicationData.masterRoute.getOriginClosestStation()[2],context,0, 1);
         }
 
         // tehdään reittiobjekti lähimmältä asemalta kohdetta lähimmälle asemalle. Ei käytetä routeria koska se etsii reitin teitä pitkin. Halutaan linnuntie alustavasti.
         Log.d("Handler","Creating route 1");
-        Double tempLat = Double.parseDouble(foundOriginStation[1]);
-        Double tempLng = Double.parseDouble(foundOriginStation[2]);
+        Double tempLat = Double.parseDouble(ApplicationData.masterRoute.getOriginClosestStation()[1]);
+        Double tempLng = Double.parseDouble(ApplicationData.masterRoute.getOriginClosestStation()[2]);
         LatLng originLatLng = new LatLng(tempLat, tempLng);
-        tempLat = Double.parseDouble(foundDestinationStation[1]);
-        tempLng = Double.parseDouble(foundDestinationStation[2]);
+        tempLat = Double.parseDouble(ApplicationData.masterRoute.getDestinationClosestStation()[1]);
+        tempLng = Double.parseDouble(ApplicationData.masterRoute.getDestinationClosestStation()[2]);
         LatLng destinationLatLng = new LatLng(tempLat, tempLng);
         // annetaan tälle reitille tyhjät osoitteet ja nollat pituuteen ja kestoon koska se on linnuntie.
         Route stationToStationRoute = new Route(originLatLng, destinationLatLng, "", "", 0,0);
@@ -464,7 +467,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         router = new Router();
         router.delegate = RoutePresenter.this;
         Log.d("Handler","Creating route 2");
-        router.getWalkingRoute(foundDestinationStation[1]+","+foundDestinationStation[2], destination,context,2, 1);
+        router.getWalkingRoute(ApplicationData.masterRoute.getDestinationClosestStation()[1]+","+ApplicationData.masterRoute.getDestinationClosestStation()[2], ApplicationData.masterRoute.getDestinationAddress(), context,2, 1);
     }
 
 
@@ -560,29 +563,22 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
     @Override
     public void getWalkingRouteFinish(Route route) {
         // mätetään reitti listaan oikealle paikalleen. jos reitti oli kokonaisreitin viimeinen puuttuva osa, niin piirretään koko reitti kartalle.
-        if(ApplicationData.routeListList.size() < route.listIndex)
-        {
-            Log.d("getWalkingRouteFinish", "List size smaller than intended index at adding list");
-            ApplicationData.routeListList.add(new ArrayList<Route>());
-        }
-        else
-        {
-            ApplicationData.routeListList.add(route.listIndex, new ArrayList<Route>());
-        }
+            if (ApplicationData.routeListList.size() < route.listIndex) {
+                Log.d("getWalkingRouteFinish", "List size smaller than intended index at adding list");
+                ApplicationData.routeListList.add(new ArrayList<Route>());
+            } else {
+                ApplicationData.routeListList.add(route.listIndex, new ArrayList<Route>());
+            }
 
-        try
-        {
-            ApplicationData.routeListList.get(route.listIndex).add(route.index,route);
-        }
-        catch(IndexOutOfBoundsException e)
-        {
-            Log.d("getWalkingRouteFinish", "IndexOutOfBoundsException at adding route. Adding to the end of the list.");
-            ApplicationData.routeListList.get(route.listIndex).add(route);
-        }
+            try {
+                ApplicationData.routeListList.get(route.listIndex).add(route.index, route);
+            } catch (IndexOutOfBoundsException e) {
+                Log.d("getWalkingRouteFinish", "IndexOutOfBoundsException at adding route. Adding to the end of the list.");
+                ApplicationData.routeListList.get(route.listIndex).add(route);
+            }
 
-        Log.d("getRouteFinish", "ROUTE " + route.index + " CREATED FOR LIST " + route.listIndex);
-        ShowRouteInMap(route);
-
+            Log.d("getRouteFinish", "ROUTE " + route.index + " CREATED FOR LIST " + route.listIndex);
+            ShowRouteInMap(route);
         /*
         listIsComplete = true;
         int i;
@@ -605,25 +601,26 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
 
     @Override
     public void getBusRouteFinish(Route route)
-    {
+    { // TODO: miten toi valueof toimii? pitäs muuttaa Appdatan sisään arvot.
+        // TODO: JOS KÄYTTÄÄ getWalkingRoutea tässä, niin softa kaatuu!
         // bussireitti valmis, tehdään kävelyteitti lähtöpysäkille lähtöpisteestä
         Router router = new Router();
         router.delegate = this;
         if(ApplicationData.deviceLocationIsOrigin)
         {
-            router.getWalkingRoute(String.valueOf(ApplicationData.mLastLocation.getLatitude())+","+String.valueOf(ApplicationData.mLastLocation.getLongitude()),String.valueOf(route.origin.latitude)+","+String.valueOf(route.origin.longitude),getBaseContext(),1,2);
+         //   router.getWalkingRoute(String.valueOf(ApplicationData.mLastLocation.getLatitude())+","+String.valueOf(ApplicationData.mLastLocation.getLongitude()),String.valueOf(route.origin.latitude)+","+String.valueOf(route.origin.longitude),getBaseContext(),1,2);
         }
         else
         {
-            router.getWalkingRoute(origin,String.valueOf(route.origin.latitude)+","+String.valueOf(route.origin.longitude),getBaseContext(),1,2);
+         //   router.getWalkingRoute(origin,String.valueOf(route.origin.latitude)+","+String.valueOf(route.origin.longitude),getBaseContext(),1,2);
         }
 
         // ja kävelyreitti päätepysäkiltä kohteeseen
         router = new Router();
         router.delegate = this;
-        router.getWalkingRoute(String.valueOf(route.destination.latitude)+","+String.valueOf(route.destination.longitude),destination,getBaseContext(),1,2);
+      //  router.getWalkingRoute(String.valueOf(route.destination.latitude)+","+String.valueOf(route.destination.longitude),destination,getBaseContext(),1,2);
 
-        ShowRouteInMap(route);
+      //  ShowRouteInMap(route);
     }
 
 
@@ -716,7 +713,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
             while (i.hasNext()) {
                 String[] s = i.next();
                 timeTemp = timeFormat.parse(s[3]);
-                if (originTime.after(timeTemp)) {
+                if (ApplicationData.masterRoute.getOriginTime().after(timeTemp)) {
                     i.remove(); // removes trainDataTimeTableDeparture(0)
                     trainData.remove(0);
                     trainDataTimeTableArrival.remove(0);
@@ -725,25 +722,29 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
 
             // TODO: trainData,trainDataTimeTableArrival, trainDataTimeTableDeparture jokaisesta paikallinen muuttuja ja siitä työnnetään objekteihin
             ApplicationData.fullRouteList = new ArrayList<>();
-
-            for (int index = 0; index < trainData.size(); index++) {
-                ApplicationData.fullRouteList.add(ApplicationData.masterRoute);
-                ApplicationData.fullRouteList.get(index).addRouteSegment();
-                ApplicationData.fullRouteList.get(index).routeSegmentList.get(index).setTrainNumber(trainData.get(index)[0]);
-                ApplicationData.fullRouteList.get(index).routeSegmentList.get(index).setTrainType(trainData.get(index)[2]);
-                ApplicationData.fullRouteList.get(index).routeSegmentList.get(index).setDepType(trainDataTimeTableDeparture.get(index)[0]);
-                ApplicationData.fullRouteList.get(index).routeSegmentList.get(index).setDepTrack(trainDataTimeTableDeparture.get(index)[1]);
-                ApplicationData.fullRouteList.get(index).routeSegmentList.get(index).setDepDate(trainDataTimeTableDeparture.get(index)[2]);
-                ApplicationData.fullRouteList.get(index).routeSegmentList.get(index).setDepTime(trainDataTimeTableDeparture.get(index)[3]);
-                ApplicationData.fullRouteList.get(index).routeSegmentList.get(index).setArrType(trainDataTimeTableArrival.get(index)[0]);
-                ApplicationData.fullRouteList.get(index).routeSegmentList.get(index).setArrTrack(trainDataTimeTableArrival.get(index)[1]);
-                ApplicationData.fullRouteList.get(index).routeSegmentList.get(index).setArrDate(trainDataTimeTableArrival.get(index)[2]);
-                ApplicationData.fullRouteList.get(index).routeSegmentList.get(index).setArrTime(trainDataTimeTableArrival.get(index)[3]);
-
-                ApplicationData.fullRouteList.get(index).addDuration(10); // TODO: tällä lisätään kokonaisaikaa
+            if (trainData != null) {
+                for (int index = 0; index < trainData.size(); index++) {
+                    ApplicationData.fullRouteList.add(ApplicationData.masterRoute);
+                    ApplicationData.fullRouteList.get(index).addRouteSegment();
+                    // TODO: routesegmentlist ei pitäis käyttää indexiä, jokainen fullroute saa nyt kaikki segmentit. TEE JOTAIN
+                    ApplicationData.fullRouteList.get(index).routeSegmentList.get(index).setTrainNumber(trainData.get(index)[0]);
+                    ApplicationData.fullRouteList.get(index).routeSegmentList.get(index).setTrainType(trainData.get(index)[2]);
+                    ApplicationData.fullRouteList.get(index).routeSegmentList.get(index).setDepType(trainDataTimeTableDeparture.get(index)[0]);
+                    ApplicationData.fullRouteList.get(index).routeSegmentList.get(index).setDepTrack(trainDataTimeTableDeparture.get(index)[1]);
+                    ApplicationData.fullRouteList.get(index).routeSegmentList.get(index).setDepDate(trainDataTimeTableDeparture.get(index)[2]);
+                    ApplicationData.fullRouteList.get(index).routeSegmentList.get(index).setDepTime(trainDataTimeTableDeparture.get(index)[3]);
+                    ApplicationData.fullRouteList.get(index).routeSegmentList.get(index).setArrType(trainDataTimeTableArrival.get(index)[0]);
+                    ApplicationData.fullRouteList.get(index).routeSegmentList.get(index).setArrTrack(trainDataTimeTableArrival.get(index)[1]);
+                    ApplicationData.fullRouteList.get(index).routeSegmentList.get(index).setArrDate(trainDataTimeTableArrival.get(index)[2]);
+                    ApplicationData.fullRouteList.get(index).routeSegmentList.get(index).setArrTime(trainDataTimeTableArrival.get(index)[3]);
+                }
+            } else {
+                textView.setText("No direct trains today");
             }
 
-
+            Log.d("RecyclerView", "called");
+            RecyclerView.Adapter adapter = new fullRouteAdapter(this, ApplicationData.fullRouteList);
+            recyclerView.setAdapter(adapter);
 
 
             /// ------- DEV ------ Null box. Use this to show data, debugging purposes
@@ -759,7 +760,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
 
 
         // Put all retrieved data into a bundle for easier handling(?) TODO: is this needed?
-        if (trainData.size() != 0) {
+     /*   if (trainData.size() != 0) {
             routeData.putString("trainNumber", trainData.get(0)[0]);
             routeData.putString("trainType", trainData.get(0)[2]);
             routeData.putString("depType", trainDataTimeTableDeparture.get(0)[0]);
@@ -773,9 +774,9 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
 
         } else textView.setText("No direct trains today");
         Log.d("Function called", "Find closest station");
-
+*/
         // MIIKAN TAIKAA
-        if (trainData.size() != 0) {
+ /*       if (trainData.size() != 0) {
             for(int index = 0; index < trainData.size(); index++) {
                 routeList.add(new Route(trainData.get(index)[0], trainData.get(index)[2],
                         trainDataTimeTableDeparture.get(index)[0], trainDataTimeTableDeparture.get(index)[1],
@@ -786,7 +787,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         } else textView.setText("No direct trains today");
         RecyclerView.Adapter adapter = new routeAdapter(this, routeList);
         recyclerView.setAdapter(adapter);
-        //
+        //*/
     }
 
     // näytetään annettu route-objektin kartalla

@@ -27,8 +27,6 @@ public class Route
     public int index;
     public int listIndex;
     public String url;
-    public String originClosestStation;
-    public String destinationClosestStation;
 
     public String trainNumber;
     public String trainType;
