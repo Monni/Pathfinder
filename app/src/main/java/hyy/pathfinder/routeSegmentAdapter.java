@@ -1,36 +1,38 @@
 package hyy.pathfinder;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.List;
 
 /**
- * Created by Kotimonni on 31.10.2016.
+ * Created by Kotimonni on 16.11.2016.
  */
 
-// TODO: tämä luokka taitaa olla nyt turha? routeSegmentAdapter korvaa, mutta pidetään tallessa toistaiseksi
-public class routeAdapter extends RecyclerView.Adapter<routeAdapter.ViewHolder> {
+public class routeSegmentAdapter extends RecyclerView.Adapter<routeSegmentAdapter.ViewHolder> {
     // Adapter data
-    private List<Route> routeList;
+    private List<routeSegment> routeSegmentList;
     private Activity context;
+
     // Adapter constructor, get data from activity
-    public routeAdapter(Activity context, List<Route> routeList) {
-        this.routeList = routeList;
+    public routeSegmentAdapter(Activity context, List<routeSegment> routeSegmentList) {
+        this.routeSegmentList = routeSegmentList;
         this.context = context;
-        Log.d("routeAdapter", "started");
+        Log.d("routeSegmentAdapter", "started");
     }
 
     // Return the size of routeList (invoked by the layout manager)
     @Override
     public int getItemCount() {
-        if (routeList != null) {
-            return routeList.size();
+        if (routeSegmentList != null) {
+            return routeSegmentList.size();
         }
         else return 0;
     }
@@ -43,30 +45,25 @@ public class routeAdapter extends RecyclerView.Adapter<routeAdapter.ViewHolder> 
     }
 
     // replace the contents of a view (invoked by the layout manager)
-    // get element from kenttaList at this position
+    // get element from routeSegmentList at this position
     // replace the contents of the view with that element
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, int position) {
-        Route route = routeList.get(position);
-      /*  Glide.with(this.context)
-                .load("KUVA")
-                .override(250,170)
-                .into(viewHolder.kenttaImageView);
-*/
-        viewHolder.depDateTextView.setText(route.depDate);
-        viewHolder.depTimeTextView.setText(route.depTime);
-        viewHolder.depTrackTextView.setText(route.depTrack);
-        viewHolder.trainTypeTextView.setText(route.trainType);
-        viewHolder.trainNumberTextView.setText(route.trainNumber);
-        viewHolder.arrTimeTextView.setText(route.arrTime);
-        viewHolder.arrTrackTextView.setText(route.arrTrack);
+        routeSegment segment = routeSegmentList.get(position);
+        viewHolder.depDateTextView.setText(segment.getDepDate());
+        viewHolder.depTimeTextView.setText(segment.getDepTime());
+        viewHolder.depTrackTextView.setText(segment.getDepTrack());
+        viewHolder.trainTypeTextView.setText(segment.getTrainType());
+        viewHolder.trainNumberTextView.setText(segment.getTrainNumber());
+        viewHolder.arrTimeTextView.setText(segment.getArrTime());
+        viewHolder.arrTrackTextView.setText(segment.getArrTrack());
+
 
     }
 
     // view holder class to specify card UI objects
     public class ViewHolder extends RecyclerView.ViewHolder {
         // each data item is just a string in this case
-       // public ImageView kenttaImageView;
         public TextView depDateTextView;
         public TextView depTimeTextView;
         public TextView trainNumberTextView;
@@ -75,10 +72,11 @@ public class routeAdapter extends RecyclerView.Adapter<routeAdapter.ViewHolder> 
         public TextView arrTimeTextView;
         public TextView arrTrackTextView;
 
+
         public ViewHolder (View itemView) {
             super (itemView);
             // get layout IDs
-        //    kenttaImageView = (ImageView) itemView.findViewById(R.id.kenttaImageView);
+            //    kenttaImageView = (ImageView) itemView.findViewById(R.id.kenttaImageView);
             depDateTextView = (TextView) itemView.findViewById(R.id.depDateTextView);
             depTimeTextView = (TextView) itemView.findViewById(R.id.depTimeTextView);
             trainNumberTextView = (TextView) itemView.findViewById(R.id.trainNumberTextView);
@@ -91,13 +89,9 @@ public class routeAdapter extends RecyclerView.Adapter<routeAdapter.ViewHolder> 
                 @Override
                 public void onClick(View view) {
                     int position = getAdapterPosition();
-                    //Intent intent = new Intent(context, RouteDetail.class);
-
-                    //view.getContext().startActivity(intent);
+                    Toast.makeText(context, "Velp!", Toast.LENGTH_SHORT).show();
                 }
             });
         }
     }
-
-
 }

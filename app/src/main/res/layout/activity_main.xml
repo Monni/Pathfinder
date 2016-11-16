@@ -39,7 +39,8 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:id="@+id/etOrigin"
-            android:layout_gravity="center_horizontal" />
+            android:layout_gravity="center_horizontal"
+            android:text="Jyväskylä" />
 
         <TextView
             android:layout_width="fill_parent"
@@ -51,7 +52,8 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:id="@+id/etDestination"
-            android:layout_gravity="center_horizontal" />
+            android:layout_gravity="center_horizontal"
+            android:text="Helsinki" />
 
         <!--miikalta-->
         <Switch
@@ -59,7 +61,7 @@
             android:layout_height="wrap_content"
             android:text="Heti"
             android:id="@+id/locStartImmediately"
-            />
+            android:checked="false" />
         <EditText
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
