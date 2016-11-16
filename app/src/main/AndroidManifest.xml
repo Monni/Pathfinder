@@ -53,12 +53,14 @@
         <activity
             android:name=".MapsActivity"
             android:label="@string/title_activity_maps"
-            android:theme="@style/AppTheme"></activity>
+            android:theme="@style/AppTheme" />
         <activity
             android:name=".RoutePresenter"
             android:label="Presenter"
-            android:theme="@style/NoActionBar"></activity>
-        <activity android:name=".RouteDetail"></activity>
+            android:theme="@style/NoActionBar" />
+        <activity android:name=".segmentPresenter"
+            android:label="Segmentpresenter"
+            android:theme="@style/NoActionBar"/>
     </application>
 
 </manifest>

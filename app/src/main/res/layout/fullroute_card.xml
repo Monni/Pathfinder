@@ -23,7 +23,7 @@
                 android:text="Lähtö:"/>
 
             <TextView
-                android:layout_toLeftOf="@+id/depText"
+                android:layout_toRightOf="@+id/depText"
                 android:id="@+id/originDateTV"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

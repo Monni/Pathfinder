@@ -2,12 +2,14 @@ package hyy.pathfinder;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.os.Parcelable;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.List;
 
@@ -55,9 +57,7 @@ public class fullRouteAdapter extends RecyclerView.Adapter<fullRouteAdapter.View
                 .into(viewHolder.kenttaImageView);
 */
         viewHolder.originDateTV.setText(fRoute.getOriginDate());
-        viewHolder.originTimeTV.setText(fRoute.routeSegmentList.get(position).getDepTime()); // TODO: Miksi position tässä että toimii?
-        int asd = fRoute.routeSegmentList.size();
-        Log.d("ASDASDASD", Integer.toString(asd));
+        viewHolder.originTimeTV.setText(fRoute.routeSegmentList.get(1).getDepTime());
         viewHolder.originClosestStationTV.setText(fRoute.getOriginClosestStation()[0]);
         viewHolder.destinationClosestStationTV.setText(fRoute.getDestinationClosestStation()[0]);
 
@@ -87,9 +87,9 @@ public class fullRouteAdapter extends RecyclerView.Adapter<fullRouteAdapter.View
                 @Override
                 public void onClick(View view) {
                     int position = getAdapterPosition();
-                    Intent intent = new Intent(context, RouteDetail.class);
-
-                    //view.getContext().startActivity(intent);
+                    Intent intent = new Intent(context, segmentPresenter.class);
+                    intent.putExtra("route", fullRouteList.get(position));
+                    view.getContext().startActivity(intent);
                 }
             });
         }
