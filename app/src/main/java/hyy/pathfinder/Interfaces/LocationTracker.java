@@ -1,4 +1,4 @@
-package hyy.pathfinder;
+package hyy.pathfinder.Interfaces;
 
 import android.location.Location;
 

@@ -1,6 +1,5 @@
-package hyy.pathfinder;
+package hyy.pathfinder.Data;
 
-import android.app.Activity;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -12,6 +11,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+
+import hyy.pathfinder.Interfaces.AsyncResponse;
 
 /**
  * Created by Kotimonni on 23.10.2016.

@@ -1,4 +1,4 @@
-package hyy.pathfinder;
+package hyy.pathfinder.Activities;
 
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -40,6 +40,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
+
+import hyy.pathfinder.Adapters.fullRouteAdapter;
+import hyy.pathfinder.Interfaces.AppDataInterface;
+import hyy.pathfinder.Data.AsyncJsonFetcher;
+import hyy.pathfinder.Interfaces.AsyncResponse;
+import hyy.pathfinder.Objects.Route;
+import hyy.pathfinder.Objects.fullRoute;
+import hyy.pathfinder.R;
+import hyy.pathfinder.Data.Router;
 
 
 /**

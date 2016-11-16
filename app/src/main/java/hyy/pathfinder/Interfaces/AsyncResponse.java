@@ -1,11 +1,9 @@
-package hyy.pathfinder;
-
-import com.google.android.gms.maps.model.PolylineOptions;
+package hyy.pathfinder.Interfaces;
 
 
 import org.json.JSONArray;
 
-import java.util.List;
+import hyy.pathfinder.Objects.Route;
 
 /**
  * Created by Prometheus on 04-Oct-16.

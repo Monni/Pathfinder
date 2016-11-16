@@ -1,4 +1,4 @@
-package hyy.pathfinder;
+package hyy.pathfinder.Data;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -6,6 +6,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
+
+import hyy.pathfinder.R;
 
 /**
  * Created by Prometheus on 20-Sep-16.

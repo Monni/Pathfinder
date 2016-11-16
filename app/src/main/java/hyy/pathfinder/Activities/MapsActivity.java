@@ -1,4 +1,4 @@
-package hyy.pathfinder;
+package hyy.pathfinder.Activities;
 
 import android.content.Context;
 import android.content.IntentSender;
@@ -56,6 +56,8 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+
+import hyy.pathfinder.R;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
 

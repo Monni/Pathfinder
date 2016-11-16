@@ -1,4 +1,4 @@
-package hyy.pathfinder;
+package hyy.pathfinder.Activities;
 
 import android.content.Intent;
 import android.location.Location;
@@ -18,6 +18,10 @@ import com.google.android.gms.maps.GoogleMap;
 import java.text.DecimalFormat;
 import java.util.Calendar;
 
+import hyy.pathfinder.Interfaces.AppDataInterface;
+import hyy.pathfinder.Data.LocationPermissionAgent;
+import hyy.pathfinder.Data.PermissionDialogFragment;
+import hyy.pathfinder.R;
 
 
 public class MainActivity extends AppCompatActivity implements AppDataInterface {

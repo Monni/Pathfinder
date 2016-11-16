@@ -1,17 +1,14 @@
-package hyy.pathfinder;
+package hyy.pathfinder.Activities;
 
 import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
-import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
@@ -19,6 +16,10 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.GoogleMap;
 
 import java.util.List;
+
+import hyy.pathfinder.Interfaces.AppDataInterface;
+import hyy.pathfinder.Interfaces.ApplicationDataCallbacks;
+import hyy.pathfinder.Objects.Route;
 
 /**
  * Created by H8244 on 10/28/2016.
@@ -38,13 +39,8 @@ public class ApplicationData extends Application
     public static GoogleMap mMap;
     public static boolean deviceLocationIsOrigin;
     public static boolean deviceLocationListeningPermitted;
-   // public static List<Route> routeList;
     //routeListListin ekaan taulukkopaikkaan tulee kävelyreittilista, toiseen junarettilista ja kolmanteen bussireittilista. Kävely punanen, juna keltanen ja bussi sininen.
     public static List<List<Route>> routeListList;
-
-    //public static fullRoute masterRoute;
-    //public static List<fullRoute> fullRouteList;
-
 
     // Pitää ajaa getApplicationContext(), setApplicationDataCallbacks(), setApplicationDataCallbacksDelegate, setLocationListener(), buildGoogleApiClient ja viimeisenä createLocationRequest() (järjestys oleellinen, nullpointerit herkässä)
     // Tämän luokan onCreatessa homma ei toimi, koska luokasta ei koskaan tehdä insanssia - sen toimintoja käytetään vain staattisten funktioiden ja muuttujien kautta.

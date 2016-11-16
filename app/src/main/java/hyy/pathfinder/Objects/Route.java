@@ -1,4 +1,4 @@
-package hyy.pathfinder;
+package hyy.pathfinder.Objects;
 
 import android.graphics.Color;
 import android.location.Location;

@@ -1,6 +1,4 @@
-package hyy.pathfinder;
-
-import android.location.Location;
+package hyy.pathfinder.Data;
 
 import com.google.android.gms.maps.model.LatLng;
 
@@ -11,6 +9,8 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+
+import hyy.pathfinder.Objects.Route;
 
 /**
  * Created by Prometheus on 15-Sep-16.

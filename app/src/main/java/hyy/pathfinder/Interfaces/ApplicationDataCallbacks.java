@@ -1,4 +1,4 @@
-package hyy.pathfinder;
+package hyy.pathfinder.Interfaces;
 
 import android.location.Location;
 import android.os.Bundle;
@@ -8,6 +8,8 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
+
+import hyy.pathfinder.Interfaces.AppDataInterface;
 
 /**
  * Created by Prometheus on 28-Oct-16.

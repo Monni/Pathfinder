@@ -1,17 +1,19 @@
-package hyy.pathfinder;
+package hyy.pathfinder.Adapters;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.os.Parcelable;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.List;
+
+import hyy.pathfinder.R;
+import hyy.pathfinder.Objects.fullRoute;
+import hyy.pathfinder.Activities.segmentPresenter;
 
 /**
  * Created by Kotimonni on 15.11.2016.

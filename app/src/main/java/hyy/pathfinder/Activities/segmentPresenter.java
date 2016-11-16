@@ -1,10 +1,14 @@
-package hyy.pathfinder;
+package hyy.pathfinder.Activities;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+
+import hyy.pathfinder.Adapters.routeSegmentAdapter;
+import hyy.pathfinder.Objects.fullRoute;
+import hyy.pathfinder.R;
 
 public class segmentPresenter extends AppCompatActivity {
     private RecyclerView recyclerView;

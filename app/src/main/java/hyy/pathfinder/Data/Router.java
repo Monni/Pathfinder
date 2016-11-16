@@ -1,4 +1,4 @@
-package hyy.pathfinder;
+package hyy.pathfinder.Data;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -11,16 +11,16 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+
+import hyy.pathfinder.Data.DataParser;
+import hyy.pathfinder.Data.FetchUrl;
+import hyy.pathfinder.Interfaces.AsyncResponse;
+import hyy.pathfinder.Objects.Route;
+import hyy.pathfinder.R;
 
 /**
  * Created by Prometheus on 22-Sep-16.
