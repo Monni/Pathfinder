@@ -48,12 +48,14 @@ public class routeSegment implements Parcelable, RouterResponse {
         isTrainSegment = false;
     }
 
-    public routeSegment(List<LatLng> trainRoute)
+    public routeSegment(List<LatLng> trainRoute, String TrainNumber, String TrainType)
     {
         isTrainSegment = true;
         trainTrackData = trainRoute;
         origin = trainRoute.get(0);
         destination = trainRoute.get(trainRoute.size()-1);
+        trainNumber = TrainNumber;
+        trainType = TrainType;
     }
 
     public routeSegment(routeSegment segment)

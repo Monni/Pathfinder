@@ -3,7 +3,12 @@ package hyy.pathfinder.Activities;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.RectF;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.AsyncTask;
@@ -665,7 +670,6 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         List<LatLng> trainRoute;
         boolean stationIsRelevant = false;
         List<String> stationShortCodes = new ArrayList<>(); // junareitin karttaan piirtämistä varten
-        List<List<String>> codeLists = new ArrayList<>();
 
         // ----------DEV--------- Get all trains from station (start-end)
         try {
@@ -746,9 +750,10 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                         trainRoute.add(tempLatLng);
                     }
                 }
-                trainData.add(new routeSegment(trainRoute));
+                String trainNumber = String.valueOf(train.getInt("trainNumber"));
+                String trainType = train.getString("trainType");
+                trainData.add(new routeSegment(trainRoute, trainNumber, trainType));
                 stationShortCodes.clear();
-
             }
 
             // Next remove all trains before selected time of day, uses iterator to go trough data
@@ -775,42 +780,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
             Log.d("RecyclerView", "called");
             final RecyclerView.Adapter adapter = new fullRouteAdapter(this, fullRouteList);
             recyclerView.setAdapter(adapter);
-
-            ItemTouchHelper.SimpleCallback simpleItemTouchCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
-
-                @Override
-                public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
-                    return false;
-                }
-
-                @Override
-                public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir) {
-                    if(swipeDir == ItemTouchHelper.LEFT)
-                    {
-                        // remove data
-                        fullRouteList.remove(viewHolder.getAdapterPosition());
-                        // update adapter
-                        adapter.notifyItemRemoved(viewHolder.getAdapterPosition());
-                    }
-                    else if (swipeDir == ItemTouchHelper.RIGHT)
-                    {
-                        Intent intent = new Intent(context, segmentPresenter.class);
-                        intent.putExtra("route", fullRouteList.get(viewHolder.getAdapterPosition()));
-                        startActivity(intent);
-                    }
-                }
-
-                @Override
-                public void onMoved(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, int fromPos, RecyclerView.ViewHolder target, int toPos, int x, int y) {
-                    super.onMoved(recyclerView, viewHolder, fromPos, target, toPos, x, y);
-                }
-            };
-
-            // connect item touch helper to recycler view
-            ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleItemTouchCallback);
-            itemTouchHelper.attachToRecyclerView(recyclerView);
-
-
+            AddItemTouchHelper(adapter);
 
 
             /// ------- DEV ------ Null box. Use this to show data, debugging purposes
@@ -823,6 +793,74 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
             Log.d("No trains found", e.toString());
             // --------DEV---------- KLUP now program should start looking for alternate routes (via stop/multiple stops)
         }
+    }
+
+    protected void AddItemTouchHelper(final RecyclerView.Adapter rAdapter)
+    {
+        final Paint p = new Paint();
+        ItemTouchHelper.SimpleCallback simpleItemTouchCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
+
+            @Override
+            public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir) {
+                if(swipeDir == ItemTouchHelper.LEFT)
+                {
+                    // remove data
+                    fullRouteList.remove(viewHolder.getAdapterPosition());
+                    // update adapter
+                    rAdapter.notifyItemRemoved(viewHolder.getAdapterPosition());
+                }
+                else if (swipeDir == ItemTouchHelper.RIGHT)
+                {
+                    Intent intent = new Intent(context, segmentPresenter.class);
+                    intent.putExtra("route", fullRouteList.get(viewHolder.getAdapterPosition()));
+                    rAdapter.notifyItemChanged(viewHolder.getAdapterPosition());
+                    startActivity(intent);
+                }
+            }
+
+            @Override
+            public void onChildDraw(Canvas c, RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
+
+                Bitmap icon;
+                if(actionState == ItemTouchHelper.ACTION_STATE_SWIPE){
+
+                    View itemView = viewHolder.itemView;
+                    float height = (float) itemView.getBottom() - (float) itemView.getTop();
+                    float width = height / 3;
+
+                    if(dX > 0){
+                        p.setColor(Color.parseColor("#388E3C"));
+                        RectF background = new RectF((float) itemView.getLeft(), (float) itemView.getTop(), dX,(float) itemView.getBottom());
+                        c.drawRect(background,p);
+                        icon = BitmapFactory.decodeResource(getResources(), R.drawable.zoom);
+                        RectF icon_dest = new RectF((float) itemView.getLeft() + width ,(float) itemView.getTop() + width,(float) itemView.getLeft()+ 2*width,(float)itemView.getBottom() - width);
+                        c.drawBitmap(icon,null,icon_dest,p);
+                    } else {
+                        p.setColor(Color.parseColor("#D32F2F"));
+                        RectF background = new RectF((float) itemView.getRight() + dX, (float) itemView.getTop(),(float) itemView.getRight(), (float) itemView.getBottom());
+                        c.drawRect(background,p);
+                        icon = BitmapFactory.decodeResource(getResources(), R.drawable.trash_can);
+                        RectF icon_dest = new RectF((float) itemView.getRight() - 2*width ,(float) itemView.getTop() + width,(float) itemView.getRight() - width,(float)itemView.getBottom() - width);
+                        c.drawBitmap(icon,null,icon_dest,p);
+                    }
+                }
+                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
+            }
+
+            @Override
+            public void onMoved(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, int fromPos, RecyclerView.ViewHolder target, int toPos, int x, int y) {
+                super.onMoved(recyclerView, viewHolder, fromPos, target, toPos, x, y);
+            }
+        };
+
+        // connect item touch helper to recycler view
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleItemTouchCallback);
+        itemTouchHelper.attachToRecyclerView(recyclerView);
     }
 
 
@@ -849,13 +887,13 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                     fullRouteList.get(index).routeSegmentList.get(0).setDepTime("Tässä minä kävelen juna-asemalle");
                     fullRouteList.get(index).routeSegmentList.get(0).setOrigin(new LatLng(masterRoute.getOriginLocation().getLatitude(),masterRoute.getOriginLocation().getLongitude()));
                     fullRouteList.get(index).routeSegmentList.get(0).setDestination(new LatLng(Double.parseDouble(masterRoute.getOriginClosestStation().getLatitude()),Double.parseDouble(masterRoute.getOriginClosestStation().getLongitude())));
-                     Log.d("createFullRouteObjects", "Building polylineoptions");
-                     fullRouteList.get(index).routeSegmentList.get(0).BuildPolylineOptions(getBaseContext());
+                    Log.d("createFullRouteObjects", "Building polylineoptions");
+                    fullRouteList.get(index).routeSegmentList.get(0).BuildPolylineOptions(getBaseContext());
                     Log.d("createFullRouteObjects ", "Tehdään junaetappia");
                     // Junatiedot
                     fullRouteList.get(index).addRouteSegment(trainData.get(index));
-                    fullRouteList.get(index).routeSegmentList.get(1).setTrainNumber(trainData.get(index).getTrainNumber());
-                    fullRouteList.get(index).routeSegmentList.get(1).setTrainType(trainData.get(index).getTrainType());
+                    //fullRouteList.get(index).routeSegmentList.get(1).setTrainNumber(trainData.get(index).getTrainNumber());
+                    //fullRouteList.get(index).routeSegmentList.get(1).setTrainType(trainData.get(index).getTrainType());
                     fullRouteList.get(index).routeSegmentList.get(1).setDepType(trainDataTimeTableDeparture.get(index)[0]);
                     fullRouteList.get(index).routeSegmentList.get(1).setDepTrack(trainDataTimeTableDeparture.get(index)[1]);
                     fullRouteList.get(index).routeSegmentList.get(1).setDepDate(trainDataTimeTableDeparture.get(index)[2]);
@@ -865,16 +903,15 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                     fullRouteList.get(index).routeSegmentList.get(1).setArrDate(trainDataTimeTableArrival.get(index)[2]);
                     fullRouteList.get(index).routeSegmentList.get(1).setArrTime(trainDataTimeTableArrival.get(index)[3]);
                     Log.d("createFullRouteObjects", "Building polylineoptions for traintrip");
-                       fullRouteList.get(index).routeSegmentList.get(1).BuildPolylineOptions(getBaseContext());
-                     Log.d("createFullRouteObjects", "Tehdään kävelyetappi 2");
+                    fullRouteList.get(index).routeSegmentList.get(1).BuildPolylineOptions(getBaseContext());
+                    Log.d("createFullRouteObjects", "Tehdään kävelyetappi 2");
                     // Kävele asemalta kohteeseen
                     fullRouteList.get(index).addRouteSegment();
                     fullRouteList.get(index).routeSegmentList.get(2).setArrTime("Tässä minä kävelen asemalta kohteeseen");
                     fullRouteList.get(index).routeSegmentList.get(2).setOrigin(new LatLng(Double.parseDouble(masterRoute.getDestinationClosestStation().getLatitude()),Double.parseDouble(masterRoute.getDestinationClosestStation().getLongitude())));
                     fullRouteList.get(index).routeSegmentList.get(2).setDestination(new LatLng(masterRoute.getDestinationLocation().getLatitude(),masterRoute.getDestinationLocation().getLongitude()));
-                   Log.d("createFullRouteObjects", "Building polylineoptions");
+                    Log.d("createFullRouteObjects", "Building polylineoptions");
                     fullRouteList.get(index).routeSegmentList.get(2).BuildPolylineOptions(getBaseContext());
-
                 }
             }
         }
