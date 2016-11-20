@@ -51,25 +51,6 @@
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
 
-    <android.support.design.widget.FloatingActionButton
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|right"
-        android:id="@+id/fabRight"
-        android:layout_margin="16dp"
-        android:src="@mipmap/ic_launcher"
-        app:layout_anchor="@id/fullroute_recycler_view"
-        app:layout_anchorGravity="bottom|right|end"/>
-
-    <android.support.design.widget.FloatingActionButton
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|left"
-        android:id="@+id/fabLeft"
-        android:layout_margin="16dp"
-        android:src="@mipmap/ic_launcher"
-        app:layout_anchor="@id/fullroute_recycler_view"
-        app:layout_anchorGravity="bottom|left|end"/>
 
 
 </android.support.design.widget.CoordinatorLayout>

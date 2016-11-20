@@ -5,6 +5,7 @@ import android.app.Application;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.support.design.widget.AppBarLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -15,11 +16,15 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.GoogleMap;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import hyy.pathfinder.Interfaces.AppDataInterface;
 import hyy.pathfinder.Interfaces.ApplicationDataCallbacks;
-import hyy.pathfinder.Objects.Route;
+import hyy.pathfinder.Objects.Station;
+import hyy.pathfinder.Objects.StationList;
+import hyy.pathfinder.Objects.fullRoute;
+//import hyy.pathfinder.Objects.Route;
 
 /**
  * Created by H8244 on 10/28/2016.
@@ -39,8 +44,8 @@ public class ApplicationData extends Application
     public static GoogleMap mMap;
     public static boolean deviceLocationIsOrigin;
     public static boolean deviceLocationListeningPermitted;
-    //routeListListin ekaan taulukkopaikkaan tulee kävelyreittilista, toiseen junarettilista ja kolmanteen bussireittilista. Kävely punanen, juna keltanen ja bussi sininen.
-    public static List<List<Route>> routeListList;
+    public static StationList stationData = new StationList(); // get info from current stations. Name, shortCode, latitude and longitude
+    public static AppBarLayout routePresenterAppBar;
 
     // Pitää ajaa getApplicationContext(), setApplicationDataCallbacks(), setApplicationDataCallbacksDelegate, setLocationListener(), buildGoogleApiClient ja viimeisenä createLocationRequest() (järjestys oleellinen, nullpointerit herkässä)
     // Tämän luokan onCreatessa homma ei toimi, koska luokasta ei koskaan tehdä insanssia - sen toimintoja käytetään vain staattisten funktioiden ja muuttujien kautta.
@@ -88,6 +93,7 @@ public class ApplicationData extends Application
 
             Log.d("ApplicationData", "permission granted, updating location");
             LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, locationListener);
+            getLastLocation(activity);
         }
     }
 

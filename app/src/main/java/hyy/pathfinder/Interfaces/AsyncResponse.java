@@ -3,7 +3,7 @@ package hyy.pathfinder.Interfaces;
 
 import org.json.JSONArray;
 
-import hyy.pathfinder.Objects.Route;
+//import hyy.pathfinder.Objects.Route;
 
 /**
  * Created by Prometheus on 04-Oct-16.
@@ -11,8 +11,8 @@ import hyy.pathfinder.Objects.Route;
 
 public interface AsyncResponse
 {
-    void getWalkingRouteFinish(Route route);
-    void getTotalDistanceAndDurationFinish(Route route);
+   // void getWalkingRouteFinish(Route route);
+    //void getTotalDistanceAndDurationFinish(Route route);
     void onAsyncJsonFetcherComplete(int mode, JSONArray json, boolean jsonException);
-    void getBusRouteFinish(Route route);
+    //void getBusRouteFinish(Route route);
 }

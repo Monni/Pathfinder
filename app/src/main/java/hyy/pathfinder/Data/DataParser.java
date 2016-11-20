@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import hyy.pathfinder.Objects.Route;
+//import hyy.pathfinder.Objects.Route;
 
 /**
  * Created by Prometheus on 15-Sep-16.
@@ -100,7 +100,7 @@ public class DataParser {
 
         return list;
     }
-
+/*
     public Route parseJsonToRoute(JSONObject jObject) throws JSONException
     {
         JSONArray jaRoutes;
@@ -150,7 +150,7 @@ public class DataParser {
         return route;
     }
 
-
+*/
 
 
     /**

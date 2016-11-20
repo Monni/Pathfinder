@@ -11,6 +11,8 @@ import android.widget.TextView;
 
 import java.util.List;
 
+import hyy.pathfinder.Activities.ApplicationData;
+import hyy.pathfinder.Activities.RoutePresenter;
 import hyy.pathfinder.R;
 import hyy.pathfinder.Objects.fullRoute;
 import hyy.pathfinder.Activities.segmentPresenter;
@@ -60,8 +62,8 @@ public class fullRouteAdapter extends RecyclerView.Adapter<fullRouteAdapter.View
 */
         viewHolder.originDateTV.setText(fRoute.getOriginDate());
         viewHolder.originTimeTV.setText(fRoute.routeSegmentList.get(1).getDepTime());
-        viewHolder.originClosestStationTV.setText(fRoute.getOriginClosestStation()[0]);
-        viewHolder.destinationClosestStationTV.setText(fRoute.getDestinationClosestStation()[0]);
+        viewHolder.originClosestStationTV.setText(fRoute.getOriginClosestStation().getStationName());
+        viewHolder.destinationClosestStationTV.setText(fRoute.getDestinationClosestStation().getStationName());
 
 
     }
@@ -80,6 +82,7 @@ public class fullRouteAdapter extends RecyclerView.Adapter<fullRouteAdapter.View
             super (itemView);
             // get layout IDs
             //    kenttaImageView = (ImageView) itemView.findViewById(R.id.kenttaImageView);
+
             originDateTV = (TextView) itemView.findViewById(R.id.originDateTV);
             originTimeTV = (TextView) itemView.findViewById(R.id.originTimeTV);
             originClosestStationTV = (TextView) itemView.findViewById(R.id.originClosestStationTV);
@@ -89,9 +92,11 @@ public class fullRouteAdapter extends RecyclerView.Adapter<fullRouteAdapter.View
                 @Override
                 public void onClick(View view) {
                     int position = getAdapterPosition();
-                    Intent intent = new Intent(context, segmentPresenter.class);
-                    intent.putExtra("route", fullRouteList.get(position));
-                    view.getContext().startActivity(intent);
+                    if (ApplicationData.routePresenterAppBar.getTop() < 0)
+                    {
+                        ApplicationData.routePresenterAppBar.setExpanded(true);
+                    }
+                    fullRouteList.get(position).DrawRouteOnMap();
                 }
             });
         }

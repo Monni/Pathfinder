@@ -3,12 +3,18 @@ package hyy.pathfinder.Objects;
 import android.location.Location;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import hyy.pathfinder.Activities.ApplicationData;
 
 /**
  * Created by Kotimonni on 15.11.2016.
@@ -19,8 +25,8 @@ public class fullRoute implements Parcelable {
     public Location destinationLocation;
     public String originAddress;
     public String destinationAddress;
-    public String[] originClosestStation;
-    public String[] destinationClosestStation;
+    public Station originClosestStation;
+    public Station destinationClosestStation;
     public Integer duration;
     public Integer distance;
     public PolylineOptions polylineOptions;
@@ -36,6 +42,9 @@ public class fullRoute implements Parcelable {
 
     public void addRouteSegment() {
         this.routeSegmentList.add(new routeSegment());
+    }
+    public void addRouteSegment(routeSegment segment){
+        this.routeSegmentList.add(segment);
     }
 
     public fullRoute() {
@@ -105,19 +114,19 @@ public class fullRoute implements Parcelable {
         this.destinationAddress = destinationAddress;
     }
 
-    public String[] getOriginClosestStation() {
+    public Station getOriginClosestStation() {
         return originClosestStation;
     }
 
-    public void setOriginClosestStation(String[] originClosestStation) {
+    public void setOriginClosestStation(Station originClosestStation) {
         this.originClosestStation = originClosestStation;
     }
 
-    public String[] getDestinationClosestStation() {
+    public Station getDestinationClosestStation() {
         return destinationClosestStation;
     }
 
-    public void setDestinationClosestStation(String[] destinationClosestStation) {
+    public void setDestinationClosestStation(Station destinationClosestStation) {
         this.destinationClosestStation = destinationClosestStation;
     }
 
@@ -200,6 +209,39 @@ public class fullRoute implements Parcelable {
         walkDistanceToOriginStation = in.readByte() == 0x00 ? null : in.readInt();
         walkDurationFromDestinationStation = in.readByte() == 0x00 ? null : in.readInt();
         walkDistanceFromDestinationStation = in.readByte() == 0x00 ? null : in.readInt();
+    }
+
+    public void DrawRouteOnMap()
+    {
+        try
+        {
+            // piirretään
+            ApplicationData.mMap.clear();
+            for(int i = 0;i<routeSegmentList.size();i++)
+            {
+                Log.d("DrawRouteOnMap","Drawing segment " +i);
+                ApplicationData.mMap.addPolyline(routeSegmentList.get(i).getPolylineOptions());
+            }
+
+            // muutetaan karttanäkymää
+            LatLngBounds.Builder builder = new LatLngBounds.Builder();
+            for (int i = 0; i < routeSegmentList.size();i++)
+            {
+                builder.include(routeSegmentList.get(i).getOrigin());
+                builder.include(routeSegmentList.get(i).getDestination());
+            }
+
+            LatLngBounds bounds = builder.build();
+
+            int padding = 80; // offset from edges of the map in pixels
+            CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+            ApplicationData.mMap.animateCamera(cu);
+        }
+        catch(NullPointerException e)
+        {
+            Log.d("DrawRouteOnMap", e.toString());
+        }
+
     }
 
     @Override

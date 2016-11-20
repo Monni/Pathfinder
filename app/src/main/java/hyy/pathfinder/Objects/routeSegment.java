@@ -1,13 +1,24 @@
 package hyy.pathfinder.Objects;
 
+import android.content.Context;
+import android.graphics.Color;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
+
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.PolylineOptions;
+
+import java.util.List;
+
+import hyy.pathfinder.Data.Router;
+import hyy.pathfinder.Interfaces.RouterResponse;
 
 /**
  * Created by Kotimonni on 15.11.2016.
  */
 
-public class routeSegment implements Parcelable {
+public class routeSegment implements Parcelable, RouterResponse {
 
     private String trainNumber;
     private String trainType;
@@ -19,8 +30,75 @@ public class routeSegment implements Parcelable {
     private String arrTrack;
     private String arrDate;
     private String arrTime;
+    private LatLng origin;
+    private LatLng destination;
+    private PolylineOptions polylineOptions;
+    private Boolean isTrainSegment;
+    private List<LatLng> trainTrackData; // TODO: parempi nimi tälle? sisältää juna-asemat joidenka läpi juna kulkee.
 
-    public routeSegment() {}
+    public List<LatLng> getTrainTrackData() {
+        return trainTrackData;
+    }
+
+    public void setTrainTrackData(List<LatLng> trainTrackData) {
+        this.trainTrackData = trainTrackData;
+    }
+
+    public routeSegment() {
+        isTrainSegment = false;
+    }
+
+    public routeSegment(List<LatLng> trainRoute)
+    {
+        isTrainSegment = true;
+        trainTrackData = trainRoute;
+        origin = trainRoute.get(0);
+        destination = trainRoute.get(trainRoute.size()-1);
+    }
+
+    public routeSegment(routeSegment segment)
+    {
+        trainTrackData = segment.getTrainTrackData();
+        origin = segment.getOrigin();
+        destination = segment.getDestination();
+    }
+
+    public Boolean IsTrainSegment() {
+        return isTrainSegment;
+    }
+
+    public void IsTrainSegment(Boolean trainSegment) {
+        isTrainSegment = trainSegment;
+    }
+    public PolylineOptions getPolylineOptions()
+    {
+        return polylineOptions;
+    }
+
+    public void setPolylineOptions(PolylineOptions pOptions)
+    {
+        polylineOptions = pOptions;
+    }
+
+    public LatLng getOrigin()
+    {
+        return origin;
+    }
+
+    public void setOrigin(LatLng Origin)
+    {
+        origin = Origin;
+    }
+
+    public LatLng getDestination()
+    {
+        return destination;
+    }
+
+    public void setDestination(LatLng Destination)
+    {
+        destination = Destination;
+    }
 
     public String getTrainNumber() {
         return trainNumber;
@@ -100,6 +178,35 @@ public class routeSegment implements Parcelable {
 
     public void setArrDate(String arrDate) {
         this.arrDate = arrDate;
+    }
+
+    public void BuildPolylineOptions(Context Context)
+    {
+        if(isTrainSegment)
+        {
+            PolylineOptions pOptions = new PolylineOptions();
+            pOptions.color(Color.GREEN);
+            pOptions.width(5);
+            for(int i = 0; i<trainTrackData.size();i++)
+            {
+                pOptions.add(trainTrackData.get(i));
+            }
+            polylineOptions = pOptions;
+        }
+        else
+        {
+            String originString = String.valueOf(origin.latitude) + "," + String.valueOf(origin.longitude);
+            String destinationString = String.valueOf(destination.latitude) + "," + String.valueOf(destination.longitude);
+            Router router = new Router();
+            router.GetPolylineOptions(originString, destinationString, Context, this);
+        }
+    }
+
+    @Override
+    public void PolylineOptionsFinished(PolylineOptions options)
+    {
+        Log.d("PolylineOptionsFinished","Setting polylineoptions for routeSegment");
+        polylineOptions = options;
     }
 
     /** Parcelable magic below */
