@@ -333,7 +333,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
             String originStationLocation = (masterRoute.getOriginClosestStation().getLatitude() +","+ masterRoute.getOriginClosestStation().getLongitude());
             String originLocTemp = (ApplicationData.mLastLocation.getLatitude() +","+ ApplicationData.mLastLocation.getLongitude()); // Convert user location from Location to String
             // KLUP tää alempi tieto pitäs tallentaa johonkin ja käyttää sitä searchDirectTrackConnectionissa plus-aikana?!
-            trainDataFetcher.GetDistanceAndDuration(originLocTemp, originStationLocation); // Get dist&dur from user location to closest station
+            trainDataFetcher.GetDistanceAndDuration(originLocTemp, originStationLocation); // Get dist&dur from user location to closest station TODO: Tarvitaanko tätä?
         } else {
             Log.d("findClosestStations","Using other than device location for origin");
             Location mCustomLocation = getLocationFromAddress(masterRoute.getOriginAddress()); // Convert given address to Location (lat&long)
@@ -344,7 +344,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
             // Get Latitude and Longitude from found closest station and convert into a string
             String originStationLocation = (masterRoute.getOriginClosestStation().getLatitude() +","+ masterRoute.getOriginClosestStation().getLongitude());
             // KLUP tää alempi tieto pitäs tallentaa johonkin ja käyttää sitä searchDirectTrackConnectionissa plus-aikana?!
-            trainDataFetcher.GetDistanceAndDuration(masterRoute.getOriginAddress(), originStationLocation); // Get dist&dur from user location to closest station
+            trainDataFetcher.GetDistanceAndDuration(masterRoute.getOriginAddress(), originStationLocation); // Get dist&dur from user location to closest station. TODO: Tarvitaanko tätä?
         }
 
 
@@ -819,6 +819,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                     Intent intent = new Intent(context, segmentPresenter.class);
                     intent.putExtra("route", fullRouteList.get(viewHolder.getAdapterPosition()));
                     rAdapter.notifyItemChanged(viewHolder.getAdapterPosition());
+                    ApplicationData.selectedRoute = fullRouteList.get(viewHolder.getAdapterPosition());
                     startActivity(intent);
                 }
             }
@@ -921,17 +922,6 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         }
     }
 
-
-    protected void ShowRouteInMap(routeSegment segment)
-    {
-        //Log.d("ShowRouteInMap","Drawing route " + route.index + " in list "+ route.listIndex);
-        PolylineOptions options = segment.getPolylineOptions();
-        if(options != null)
-        {
-            ApplicationData.mMap.addPolyline(segment.getPolylineOptions());
-        }
-
-    }
 
     // TODO: Täytyy uudelleennimetä
     protected class TrainDataFetcher extends AsyncTask<String, Void, Void>

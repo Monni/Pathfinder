@@ -220,6 +220,7 @@ public class fullRoute implements Parcelable {
             for(int i = 0;i<routeSegmentList.size();i++)
             {
                 Log.d("DrawRouteOnMap","Drawing segment " +i);
+                //routeSegmentList.get(i).DrawSegmentInMap();
                 ApplicationData.mMap.addPolyline(routeSegmentList.get(i).getPolylineOptions());
             }
 

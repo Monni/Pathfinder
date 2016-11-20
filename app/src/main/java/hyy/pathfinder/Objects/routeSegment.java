@@ -6,11 +6,16 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
 
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.util.List;
 
+import hyy.pathfinder.Activities.ApplicationData;
 import hyy.pathfinder.Data.Router;
 import hyy.pathfinder.Interfaces.RouterResponse;
 
@@ -63,6 +68,20 @@ public class routeSegment implements Parcelable, RouterResponse {
         trainTrackData = segment.getTrainTrackData();
         origin = segment.getOrigin();
         destination = segment.getDestination();
+    }
+
+    public void DrawSegmentInMap()
+    {
+        ApplicationData.mMap.addPolyline(getPolylineOptions());
+
+        // muutetaan karttanäkymää
+        LatLngBounds.Builder builder = new LatLngBounds.Builder();
+        builder.include(getOrigin());
+        builder.include(getDestination());
+        LatLngBounds bounds = builder.build();
+        int padding = 50; // offset from edges of the map in pixels
+        CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+        ApplicationData.mMap.animateCamera(cu);
     }
 
     public Boolean IsTrainSegment() {

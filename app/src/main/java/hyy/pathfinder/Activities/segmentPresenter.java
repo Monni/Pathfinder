@@ -6,6 +6,8 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 
+import com.google.android.gms.maps.SupportMapFragment;
+
 import hyy.pathfinder.Adapters.routeSegmentAdapter;
 import hyy.pathfinder.Objects.fullRoute;
 import hyy.pathfinder.R;
@@ -21,6 +23,10 @@ public class segmentPresenter extends AppCompatActivity {
         // Get data from calling intent
         Bundle data = getIntent().getExtras();
         fullRoute fRoute = (fullRoute) data.getParcelable("route");
+
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        mapFragment.getMapAsync(ApplicationData.applicationDataCallbacks);
+
 
 
         // Create RecyclerView and LayoutManager

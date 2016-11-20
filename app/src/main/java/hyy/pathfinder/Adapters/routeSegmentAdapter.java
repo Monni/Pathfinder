@@ -11,6 +11,7 @@ import android.widget.Toast;
 
 import java.util.List;
 
+import hyy.pathfinder.Activities.ApplicationData;
 import hyy.pathfinder.Objects.routeSegment;
 import hyy.pathfinder.R;
 
@@ -92,6 +93,11 @@ public class routeSegmentAdapter extends RecyclerView.Adapter<routeSegmentAdapte
                 public void onClick(View view) {
                     int position = getAdapterPosition();
                     Toast.makeText(context, "Velp!", Toast.LENGTH_SHORT).show();
+                    //routeSegmentList.get(position).DrawSegmentInMap();
+                    ApplicationData.mMap.clear();
+                    ApplicationData.selectedRoute.routeSegmentList.get(position).DrawSegmentInMap();
+
+
                 }
             });
         }

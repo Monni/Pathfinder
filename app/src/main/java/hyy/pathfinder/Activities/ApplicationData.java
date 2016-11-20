@@ -46,6 +46,7 @@ public class ApplicationData extends Application
     public static boolean deviceLocationListeningPermitted;
     public static StationList stationData = new StationList(); // get info from current stations. Name, shortCode, latitude and longitude
     public static AppBarLayout routePresenterAppBar;
+    public static fullRoute selectedRoute;
 
     // Pitää ajaa getApplicationContext(), setApplicationDataCallbacks(), setApplicationDataCallbacksDelegate, setLocationListener(), buildGoogleApiClient ja viimeisenä createLocationRequest() (järjestys oleellinen, nullpointerit herkässä)
     // Tämän luokan onCreatessa homma ei toimi, koska luokasta ei koskaan tehdä insanssia - sen toimintoja käytetään vain staattisten funktioiden ja muuttujien kautta.
