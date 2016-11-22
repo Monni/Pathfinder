@@ -18,6 +18,7 @@ import com.google.android.gms.maps.GoogleMap;
 import java.text.DecimalFormat;
 import java.util.Calendar;
 
+import hyy.pathfinder.Data.ApplicationData;
 import hyy.pathfinder.Interfaces.AppDataInterface;
 import hyy.pathfinder.Data.LocationPermissionAgent;
 import hyy.pathfinder.Data.PermissionDialogFragment;
@@ -44,7 +45,6 @@ public class MainActivity extends AppCompatActivity implements AppDataInterface 
         ApplicationData.setLocationListener();
         ApplicationData.buildGoogleApiClient(this);
         ApplicationData.createLocationRequest();
-        ApplicationData.deviceLocationListeningPermitted = false;
 
         //------------------------APPLICATIONDATAN SETUPPAUS-----------------------//
 
@@ -69,7 +69,6 @@ public class MainActivity extends AppCompatActivity implements AppDataInterface 
                     EditText etOrigin = (EditText) findViewById(R.id.etOrigin);
                     etOrigin.setEnabled(false);
                     ApplicationData.deviceLocationIsOrigin = true;
-                    ApplicationData.deviceLocationListeningPermitted = true;
                     ApplicationData.connectGoogleApiClient();
                 }
                 else if(isChecked == false)

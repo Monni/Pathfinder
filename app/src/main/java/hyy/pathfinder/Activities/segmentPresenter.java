@@ -9,14 +9,14 @@ import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.fitness.data.Application;
-import com.google.android.gms.maps.CameraUpdate;
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 import hyy.pathfinder.Adapters.routeSegmentAdapter;
+import hyy.pathfinder.Data.ApplicationData;
+import hyy.pathfinder.Data.LocationPermissionAgent;
 import hyy.pathfinder.Interfaces.AppDataInterface;
 import hyy.pathfinder.Objects.fullRoute;
 import hyy.pathfinder.R;
@@ -44,7 +44,7 @@ public class segmentPresenter extends AppCompatActivity implements AppDataInterf
     @Override
     public void atConnected(Bundle bundle)
     {
-
+        Log.d("segmentPresenter","Successfully connected!");
     }
 
     @Override
@@ -62,7 +62,19 @@ public class segmentPresenter extends AppCompatActivity implements AppDataInterf
     @Override
     public void atLocationChanged(Location location)
     {
+        Log.d("atLocationChanged", "segmentPresenter");
+        if(ApplicationData.mMarker != null)
+        {
+            Log.d("atLocationChanged", "removing old marker");
+            ApplicationData.mMarker.remove();
+        }
 
+        LatLng myLoc = new LatLng(ApplicationData.mLastLocation.getLatitude(), ApplicationData.mLastLocation.getLongitude());
+        MarkerOptions userIndicator = new MarkerOptions()
+                .position(myLoc)
+                .title("Olet tässä");
+        Log.d("atLocationChanged", "Adding marker");
+        ApplicationData.mMarker = ApplicationData.mMap.addMarker(userIndicator);
     }
 
     @Override
@@ -71,9 +83,16 @@ public class segmentPresenter extends AppCompatActivity implements AppDataInterf
         Log.d("atMapReady", "MAP READY IN SEGMENTPRESENTER");
         ApplicationData.mMap = googleMap;
         ApplicationData.mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
-        if (ApplicationData.checkLocationPermission(segmentPresenter.this) && ApplicationData.deviceLocationListeningPermitted)
-        {
-            ApplicationData.mMap.setMyLocationEnabled(true);
+
+        if(LocationPermissionAgent.isLocationEnabled(this)){
+            if(ApplicationData.checkLocationPermission(this)){
+                ApplicationData.mMap.setMyLocationEnabled(true);
+            }
+        }
+        else{
+            if(ApplicationData.checkLocationPermission(this)){
+                ApplicationData.mMap.setMyLocationEnabled(false);
+            }
         }
         ApplicationData.selectedRoute.DrawRouteOnMap();
     }

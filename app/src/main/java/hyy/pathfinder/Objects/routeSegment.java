@@ -8,14 +8,13 @@ import android.util.Log;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.util.List;
 
-import hyy.pathfinder.Activities.ApplicationData;
+import hyy.pathfinder.Data.ApplicationData;
 import hyy.pathfinder.Data.Router;
 import hyy.pathfinder.Interfaces.RouterResponse;
 

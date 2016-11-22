@@ -1,4 +1,4 @@
-package hyy.pathfinder.Activities;
+package hyy.pathfinder.Data;
 
 import android.app.Activity;
 import android.app.Application;
@@ -15,13 +15,11 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.Marker;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import hyy.pathfinder.Interfaces.AppDataInterface;
-import hyy.pathfinder.Interfaces.ApplicationDataCallbacks;
-import hyy.pathfinder.Objects.Station;
 import hyy.pathfinder.Objects.StationList;
 import hyy.pathfinder.Objects.fullRoute;
 //import hyy.pathfinder.Objects.Route;
@@ -43,13 +41,12 @@ public class ApplicationData extends Application
     public static ApplicationDataCallbacks applicationDataCallbacks;
     public static GoogleMap mMap;
     public static boolean deviceLocationIsOrigin;
-    public static boolean deviceLocationListeningPermitted;
     public static StationList stationData = new StationList(); // get info from current stations. Name, shortCode, latitude and longitude
     public static AppBarLayout routePresenterAppBar;
     public static fullRoute selectedRoute;
     public static List<fullRoute> fullRouteList;
     public static fullRoute masterRoute;
-
+    public static Marker mMarker;
     // Pitää ajaa getApplicationContext(), setApplicationDataCallbacks(), setApplicationDataCallbacksDelegate, setLocationListener(), buildGoogleApiClient ja viimeisenä createLocationRequest() (järjestys oleellinen, nullpointerit herkässä)
     // Tämän luokan onCreatessa homma ei toimi, koska luokasta ei koskaan tehdä insanssia - sen toimintoja käytetään vain staattisten funktioiden ja muuttujien kautta.
     // Aina kun siirrytään uuteen aktiviteettiin täytyy asettaa se aktiviteetti delegaatiksi jolle interface paiskaa vastuun callbackista, pysäyttää edellisen mGoogleApiClientin updatet ja luoda uusi googleApiClient uudelle aktiviteetille
@@ -64,10 +61,6 @@ public class ApplicationData extends Application
         applicationDataCallbacks = new ApplicationDataCallbacks();
     }
 
-    public static void setGoogleMap(GoogleMap googleMap)
-    {
-        mMap = googleMap;
-    }
 
     public static void setLocationListener()
     {
@@ -116,7 +109,7 @@ public class ApplicationData extends Application
     }
 
 
-    protected static boolean checkLocationPermission(Activity activity){
+    public static boolean checkLocationPermission(Activity activity){
         if (ContextCompat.checkSelfPermission(activity,
                 android.Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {

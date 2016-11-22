@@ -18,7 +18,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -30,14 +29,12 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 
-import com.google.android.gms.fitness.data.Application;
-import com.google.android.gms.maps.CameraUpdate;
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
-import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -54,8 +51,10 @@ import java.util.Locale;
 import java.util.Random;
 
 import hyy.pathfinder.Adapters.fullRouteAdapter;
+import hyy.pathfinder.Data.ApplicationData;
 import hyy.pathfinder.Data.DataParser;
 import hyy.pathfinder.Data.FetchUrl;
+import hyy.pathfinder.Data.LocationPermissionAgent;
 import hyy.pathfinder.Interfaces.AppDataInterface;
 import hyy.pathfinder.Data.AsyncJsonFetcher;
 import hyy.pathfinder.Interfaces.AsyncResponse;
@@ -64,7 +63,6 @@ import hyy.pathfinder.Objects.Station;
 import hyy.pathfinder.Objects.fullRoute;
 import hyy.pathfinder.Objects.routeSegment;
 import hyy.pathfinder.R;
-import hyy.pathfinder.Data.Router;
 
 
 /**
@@ -397,130 +395,6 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         Log.d("Closest station found", closestStation.toString());
         return closestStation;
     }
-/*
-    // ---------------------------------- NÄMÄ TEKEVÄT ROUTERIA HYÖDYNTÄEN ROUTE-OBJEKTIT --------------------------------- //
-    // createWalkingRouter, createBusRoute ja createRoutesUsingStations
-
-    // suora reitti kohteeseen
-    public void createWalkingRoute()
-    {
-        Log.d("createWalkingRoute","Started");
-        Router router = new Router();
-        router.delegate = this;
-        if(ApplicationData.deviceLocationIsOrigin)
-        {
-            router.getWalkingRoute(String.valueOf(ApplicationData.mLastLocation.getLatitude())+","+String.valueOf(ApplicationData.mLastLocation.getLongitude()), masterRoute.getDestinationAddress(), context,0, 0);
-        }
-        else
-        {
-            router.getWalkingRoute(masterRoute.getOriginAddress(), masterRoute.getDestinationAddress(), context,0, 0);
-        }
-    }
-
-    public void createBusRoute()
-    {
-        // bussimatka
-        Log.d("createBusRoute", "Creating station to station -route");
-        Router router = new Router();
-        router.delegate = this;
-
-        if(ApplicationData.deviceLocationIsOrigin)
-        {
-            Log.d("createBusRoute", "Using device location as reference point");
-
-            router.getBusRoute(String.valueOf(ApplicationData.mLastLocation.getLatitude())+","+String.valueOf(ApplicationData.mLastLocation.getLongitude()), masterRoute.getDestinationAddress(), context,0, 2);
-        }
-        else
-        {
-            Log.d("createBusRoute", "Using typed start location");
-
-            router.getBusRoute(masterRoute.getOriginAddress(), masterRoute.getDestinationAddress(), context,0, 2);
-        }
-    }
-
-
-    public void createRoutesUsingStations()
-    {
-        // tarvitaan toinen lista routesListListin sisälle näitä varten, koska tämä on erillinen reittikokonaisuus
-        ApplicationData.routeListList.add(new ArrayList<Route>());
-        // myöhemmin keksittävä malli joka tekee uusia listoja oikean määrän suhteessa kokonaisreittien määrään. Nyt aluksi toimitaan kahdella; suora kävelymatka kohteeseen ja matka juna-asemien kautta kohteeseen
-
-
-        Router router = new Router();
-        router.delegate = RoutePresenter.this;
-
-        Log.d("Handler","Creating route 0");
-
-        // tehdään reittiobjekti laitteen lokaatiosta lähimmälle asemalle
-        if(ApplicationData.deviceLocationIsOrigin)
-        {
-            router.getWalkingRoute(String.valueOf(ApplicationData.mLastLocation.getLatitude())+","+String.valueOf(ApplicationData.mLastLocation.getLongitude()), masterRoute.getOriginClosestStation()[1]+","+masterRoute.getOriginClosestStation()[2],context,0, 1);
-        }
-        else
-        {
-            router.getWalkingRoute(masterRoute.getOriginAddress(), masterRoute.getOriginClosestStation()[1]+","+masterRoute.getOriginClosestStation()[2],context,0, 1);
-        }
-
-        // tehdään reittiobjekti lähimmältä asemalta kohdetta lähimmälle asemalle. Ei käytetä routeria koska se etsii reitin teitä pitkin. Halutaan linnuntie alustavasti.
-        Log.d("Handler","Creating route 1");
-        Double tempLat = Double.parseDouble(masterRoute.getOriginClosestStation()[1]);
-        Double tempLng = Double.parseDouble(masterRoute.getOriginClosestStation()[2]);
-        LatLng originLatLng = new LatLng(tempLat, tempLng);
-        tempLat = Double.parseDouble(masterRoute.getDestinationClosestStation()[1]);
-        tempLng = Double.parseDouble(masterRoute.getDestinationClosestStation()[2]);
-        LatLng destinationLatLng = new LatLng(tempLat, tempLng);
-        // annetaan tälle reitille tyhjät osoitteet ja nollat pituuteen ja kestoon koska se on linnuntie.
-        Route stationToStationRoute = new Route(originLatLng, destinationLatLng, "", "", 0,0);
-        stationToStationRoute.listIndex = 1;
-        stationToStationRoute.index = 1;
-        stationToStationRoute.polylineOptions.color(Color.YELLOW);
-
-        try
-        {
-            ApplicationData.routeListList.add(1,new ArrayList<Route>());
-        }
-        catch (IndexOutOfBoundsException e)
-        {
-            Log.d("Handler", "IndexOutOfBoundsException at adding list");
-            ApplicationData.routeListList.add(new ArrayList<Route>());
-        }
-        try
-        {
-            ApplicationData.routeListList.get(1).add(1,stationToStationRoute);
-        }
-        catch (IndexOutOfBoundsException e)
-        {
-            Log.d("Handler", "IndexOutOfBoundsException at adding route");
-            ApplicationData.routeListList.get(1).add(stationToStationRoute);
-        }
-        ShowRouteInMap(stationToStationRoute);
-        // tehdään reittiobjekti kohdetta lähimmältä asemalta kohteeseen
-        router = new Router();
-        router.delegate = RoutePresenter.this;
-        Log.d("Handler","Creating route 2");
-        router.getWalkingRoute(masterRoute.getDestinationClosestStation()[1]+","+masterRoute.getDestinationClosestStation()[2], masterRoute.getDestinationAddress(), context,2, 1);
-    }
-
-
-*/
-    /*public void setMapBounds()
-    {
-        LatLngBounds.Builder builder = new LatLngBounds.Builder();
-        for (int i = 0; i < ApplicationData.routeListList.size();i++)
-        {
-            for(int j = 0;j<ApplicationData.routeListList.get(i).size();i++)
-            {
-                builder.include(ApplicationData.routeListList.get(i).get(j).origin);
-                builder.include(ApplicationData.routeListList.get(i).get(j).destination);
-            }
-        }
-
-        LatLngBounds bounds = builder.build();
-
-        int padding = 80; // offset from edges of the map in pixels
-        CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
-        ApplicationData.mMap.animateCamera(cu);
-    }*/
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
@@ -558,7 +432,16 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
     @Override
     public void atLocationChanged(Location location)
     {
+        if(ApplicationData.mMarker != null)
+        {
+            ApplicationData.mMarker.remove();
+        }
 
+        LatLng myLoc = new LatLng(ApplicationData.mLastLocation.getLatitude(), ApplicationData.mLastLocation.getLongitude());
+        MarkerOptions userIndicator = new MarkerOptions()
+                .position(myLoc)
+                .title("You are here");
+        ApplicationData.mMarker = ApplicationData.mMap.addMarker(userIndicator);
     }
 
     @Override
@@ -568,9 +451,21 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         ApplicationData.mMap = googleMap;
         fullRouteMap = googleMap;
         ApplicationData.mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
-        if (ApplicationData.checkLocationPermission(RoutePresenter.this))
+        ApplicationData.mMap.getUiSettings().setMyLocationButtonEnabled(false);
+        if(LocationPermissionAgent.isLocationEnabled(this))
         {
-            ApplicationData.mMap.setMyLocationEnabled(true);
+            if(ApplicationData.checkLocationPermission(this))
+            {
+                ApplicationData.mMap.setMyLocationEnabled(true);
+            }
+        }
+        else
+        {
+            if(ApplicationData.checkLocationPermission(this))
+            {
+                ApplicationData.mMap.setMyLocationEnabled(false);
+
+            }
         }
     }
 
@@ -595,88 +490,6 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         int i = random.nextInt(messageList.size());
         return messageList.get(i);
     }
-
-
-/*
-
-    @Override
-    public void getTotalDistanceAndDurationFinish(Route route)
-    {
-        ApplicationData.masterRoute.setWalkDistanceToOriginStation(KLUP);
-        ApplicationData.masterRoute.setWalkDurationToOriginStation(KLUP);
-        ApplicationData.masterRoute.setWalkDistanceToOriginStation(KLUP);
-        ApplicationData.masterRoute.setWalkDurationToOriginStation(KLUP);
-
-
-    }
-
-
-
-    @Override
-    public void getWalkingRouteFinish(Route route) {
-        // mätetään reitti listaan oikealle paikalleen. jos reitti oli kokonaisreitin viimeinen puuttuva osa, niin piirretään koko reitti kartalle.
-            if (ApplicationData.routeListList.size() < route.listIndex) {
-                Log.d("getWalkingRouteFinish", "List size smaller than intended index at adding list");
-                ApplicationData.routeListList.add(new ArrayList<Route>());
-            } else {
-                ApplicationData.routeListList.add(route.listIndex, new ArrayList<Route>());
-            }
-
-            try {
-                ApplicationData.routeListList.get(route.listIndex).add(route.index, route);
-            } catch (IndexOutOfBoundsException e) {
-                Log.d("getWalkingRouteFinish", "IndexOutOfBoundsException at adding route. Adding to the end of the list.");
-                ApplicationData.routeListList.get(route.listIndex).add(route);
-            }
-
-            Log.d("getRouteFinish", "ROUTE " + route.index + " CREATED FOR LIST " + route.listIndex);
-            ShowRouteInMap(route);
-
-    }
-
-    @Override
-    public void getBusRouteFinish(Route route)
-    { // TODO: miten toi valueof toimii? pitäs muuttaa Appdatan sisään arvot.
-        // TODO: JOS KÄYTTÄÄ getWalkingRoutea tässä, niin softa kaatuu!
-        // bussireitti valmis, tehdään kävelyteitti lähtöpysäkille lähtöpisteestä
-        Router router = new Router();
-        router.delegate = this;
-        if(ApplicationData.deviceLocationIsOrigin)
-        {
-         //   router.getWalkingRoute(String.valueOf(ApplicationData.mLastLocation.getLatitude())+","+String.valueOf(ApplicationData.mLastLocation.getLongitude()),String.valueOf(route.origin.latitude)+","+String.valueOf(route.origin.longitude),getBaseContext(),1,2);
-        }
-        else
-        {
-         //   router.getWalkingRoute(origin,String.valueOf(route.origin.latitude)+","+String.valueOf(route.origin.longitude),getBaseContext(),1,2);
-        }
-
-        // ja kävelyreitti päätepysäkiltä kohteeseen
-        router = new Router();
-        router.delegate = this;
-      //  router.getWalkingRoute(String.valueOf(route.destination.latitude)+","+String.valueOf(route.destination.longitude),destination,getBaseContext(),1,2);
-
-      //  ShowRouteInMap(route);
-    }
-
-*/
-
-    // tälle lista koordinaatteja tai osoitteita (tai molempia) joilla kutsutaan forloopissa getRoutea. getRoute tuottaa listan route-objekteja getRouteFinishissä
-    /*  public void getFullRoute(List<List<String>> coordinates)
-    {
-
-        //String destination = URLEncoder.encode(destinationString);
-        //String origin = URLEncoder.encode(originString);
-        //Router router = new Router();
-        //router.delegate = this;
-        //router.getRoute(origin, destination, getBaseContext(), );
-        for(int i = 0;i<coordinates.size();i++)
-        {
-            pendingRoutes++;
-            // onko parempi luoda uusi router jokaiselle getRoutelle vai ajaa yhtä router olion getRoutea forloopissa?
-            new Router(this).getRoute(coordinates.get(i).get(0), coordinates.get(i).get(1), getBaseContext(), i);
-        }
-    }*/
-
 
 
     protected void searchDirectTrackConnection(JSONArray json) {

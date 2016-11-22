@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import hyy.pathfinder.Activities.ApplicationData;
+import hyy.pathfinder.Data.ApplicationData;
 
 /**
  * Created by Kotimonni on 15.11.2016.

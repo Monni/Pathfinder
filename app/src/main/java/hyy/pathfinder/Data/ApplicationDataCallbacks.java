@@ -1,4 +1,4 @@
-package hyy.pathfinder.Interfaces;
+package hyy.pathfinder.Data;
 
 import android.location.Location;
 import android.os.Bundle;

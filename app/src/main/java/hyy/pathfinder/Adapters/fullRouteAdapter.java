@@ -1,7 +1,6 @@
 package hyy.pathfinder.Adapters;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -11,11 +10,9 @@ import android.widget.TextView;
 
 import java.util.List;
 
-import hyy.pathfinder.Activities.ApplicationData;
-import hyy.pathfinder.Activities.RoutePresenter;
+import hyy.pathfinder.Data.ApplicationData;
 import hyy.pathfinder.R;
 import hyy.pathfinder.Objects.fullRoute;
-import hyy.pathfinder.Activities.segmentPresenter;
 
 /**
  * Created by Kotimonni on 15.11.2016.
