@@ -40,7 +40,6 @@ public class MainActivity extends AppCompatActivity implements AppDataInterface 
         // Ainoastaan setApplicationCallbacksDelegate täytyy asettaa uudelleen kun siirrytään uuteen aktiviteettiin. Kyseisen aktiviteetin on implementoitava AppDataInterface.
         ApplicationData.mContext = getApplicationContext();
         ApplicationData.setApplicationDataCallbacks();
-        // implementoitava AppDataInterface tähän luokkaan ennen kuin delegaatin asetus toimii
         ApplicationData.setApplicationDataCallbacksDelegate(this);
         ApplicationData.setLocationListener();
         ApplicationData.buildGoogleApiClient(this);
@@ -156,32 +155,6 @@ public class MainActivity extends AppCompatActivity implements AppDataInterface 
     public void atMapReady(GoogleMap googleMap)
     {
         // jätetään tyhjäksi
-    }
-
-
-    public void startMap(View view)
-    {
-        Intent intent = new Intent(this, MapsActivity.class);
-        EditText etOrigin = (EditText) findViewById(R.id.etOrigin);
-        EditText etDestination = (EditText) findViewById(R.id.etDestination);
-        Switch gpsSwitch = (Switch) findViewById(R.id.gpsSwitch);
-        String origin;
-        boolean useMyLocation = false;
-
-        if(gpsSwitch.isChecked())
-        {
-            origin = "my_location";
-            useMyLocation = true;
-        }
-        else {origin = etOrigin.getText().toString();}
-
-        String destination = etDestination.getText().toString();
-
-        intent.putExtra("origin", origin);
-        intent.putExtra("destination", destination);
-        intent.putExtra("useMyLocation", useMyLocation);
-
-        startActivity(intent);
     }
 
 
