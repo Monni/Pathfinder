@@ -43,8 +43,10 @@ public class AsyncJsonFetcher extends AsyncTask<String, Void, JSONArray> {
                 bufferedReader.close();
                 json = new JSONArray(stringBuilder.toString());
             } catch (IOException e) {
+                Log.d("AsyncJsonFetcher", "doInBackground:" + e.getMessage());
                 e.printStackTrace();
             } catch (JSONException e) {
+                Log.d("AsyncJsonFetcher", "doInBackground:" + e.getMessage());
                 jsonException = true;
                 e.printStackTrace();
             } finally {
@@ -55,11 +57,11 @@ public class AsyncJsonFetcher extends AsyncTask<String, Void, JSONArray> {
 
         protected void onPostExecute(JSONArray json) {
             Log.d("asyncJsonFetcher", "onPostExecute, mode "+mode);
-            if (json != null) {
-                delegate.onAsyncJsonFetcherComplete(mode, json, jsonException); // calls AsyncResponse.java interface
-            } else {
+            if (json == null)
+            {
                 Log.d("asyncJsonFetcher", "JSONArray null");
             }
+            delegate.onAsyncJsonFetcherComplete(mode, json, jsonException); // calls AsyncResponse.java interface
         }
 
     public void fetchStations(String url) {
@@ -73,6 +75,7 @@ public class AsyncJsonFetcher extends AsyncTask<String, Void, JSONArray> {
         try {
             this.execute(url);
         } catch (Exception e) {
+            Log.d("AsyncJsonFetcher", "fetchTrains:" + e.getMessage());
             e.printStackTrace();
         }
 

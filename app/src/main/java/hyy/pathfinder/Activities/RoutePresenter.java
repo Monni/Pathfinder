@@ -26,6 +26,7 @@ import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 
@@ -272,28 +273,18 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                 // tarkistus löysikö AsyncJsonFetcher.
                 if(!jsonException)
                 {
-                    // Tekee kävelyreitin aloituspaikasta lähtöasemalle, lähtöasemalta suora viiva kohdeasemalle ja lopulta kävelyreitti kohdeasemalta kohteeseen
-                    Log.d("Handler", "Trains found, creating route using them along with walking route");
-                    //createWalkingRoute();
-                    //createRoutesUsingStations();
-                    //createBusRoute();
+                    Log.d("Handler", "Trains found, creating routes");
+                    trainJSON = json;
+                    message.what = 2;
+                    handler.sendMessage(message);
+                    Log.d("Handler Message", message.toString());
                 }
                 else
                 {
-                    // Tekee kävelyreitin alkupisteestä kohteeseen
-                    Log.d("Handler", "No trains found, only adding walking route");
-                    //createWalkingRoute();
-                    //createBusRoute();
-
+                    Log.d("Handler", "No trains found, unable to create routes");
+                    progressDialog.dismiss();
+                    Toast.makeText(this, "Valitettavasti junia ei löytynyt", Toast.LENGTH_SHORT).show();
                 }
-
-                // Fetch Trains
-                Log.d("AsyncTask finished", "trainDataTask");
-                trainJSON = json;
-
-                message.what = 2;
-                handler.sendMessage(message);
-                Log.d("Handler Message", message.toString());
                 break;
             default:
                 Log.d("Handler switch", "mode incorrect");

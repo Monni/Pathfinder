@@ -19,17 +19,17 @@ public class PermissionDialogFragment extends DialogFragment
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle(R.string.permission_dialog_title)
                 .setMessage(R.string.permission_dialog_message)
-                .setPositiveButton("Yes, continue", new DialogInterface.OnClickListener(){
+                .setPositiveButton("Kyllä, jatka", new DialogInterface.OnClickListener(){
                     public void onClick(DialogInterface dialog, int id)
                     {
                         Intent gpsOptionsIntent = new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
                         startActivity(gpsOptionsIntent);
                     }
                 })
-                .setNegativeButton("No, return", new DialogInterface.OnClickListener(){
+                .setNegativeButton("Ei, palaa", new DialogInterface.OnClickListener(){
                     public void onClick(DialogInterface dialog, int id)
                     {
-                        getActivity().finish();
+
                     }
                 });
         return builder.create();
