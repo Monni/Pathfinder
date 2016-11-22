@@ -64,20 +64,33 @@ public class AsyncJsonFetcher extends AsyncTask<String, Void, JSONArray> {
             delegate.onAsyncJsonFetcherComplete(mode, json, jsonException); // calls AsyncResponse.java interface
         }
 
+
+
     public void fetchStations(String url) {
+        Log.d("fetchStations", "started");
         mode = 1;
-       // AsyncJsonFetcher asyncJsonFetcher = new AsyncJsonFetcher(delegate);
-        this.execute(url);
+        try {
+            this.execute(url);
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
     }
-    public void fetchTrains(String url) {
+    public void fetchDirectTrains(String url) {
         Log.d("fetchTrains","started");
         mode = 2;
         try {
             this.execute(url);
         } catch (Exception e) {
-            Log.d("AsyncJsonFetcher", "fetchTrains:" + e.getMessage());
             e.printStackTrace();
         }
-
+    }
+    public void fetchStationTimeTables(String url) {
+        Log.d("fetchStationTimeTables", "started");
+        mode = 3;
+        try {
+            this.execute(url);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

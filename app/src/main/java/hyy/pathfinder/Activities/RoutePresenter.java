@@ -60,6 +60,7 @@ import hyy.pathfinder.Data.AsyncJsonFetcher;
 import hyy.pathfinder.Interfaces.AsyncResponse;
 //import hyy.pathfinder.Objects.Route;
 import hyy.pathfinder.Objects.Station;
+import hyy.pathfinder.Objects.Train;
 import hyy.pathfinder.Objects.fullRoute;
 import hyy.pathfinder.Objects.routeSegment;
 import hyy.pathfinder.R;
@@ -92,6 +93,10 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
     // masterRoute used to save user input
 
     private GoogleMap fullRouteMap;
+
+    private List<JSONArray> multiTierTimeTables = new ArrayList<>();
+    private List<List<Train>> stationTrains = new ArrayList<>();
+
     // TODO: Mitä näistä tarvitaan tulevaisuudessa?
     //boolean listIsComplete;
     //private List<Route> routeList = new ArrayList<>();
@@ -201,6 +206,8 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         });
     }
 
+
+
     private Handler handler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
@@ -217,24 +224,36 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                     findClosestStations(); // Find closest stations from origin and destination after stationDataTask finishes
 
                     // Get JSON data from digitraffic (between found originStation and destinationStation
+                    // Direct routes here
                     Log.d("JSON query URL",
                             "http://rata.digitraffic.fi/api/v1/schedules?departure_station=" + ApplicationData.masterRoute.getOriginClosestStation().getStationShortCode()
                                     + "&arrival_station=" + ApplicationData.masterRoute.getDestinationClosestStation().getStationShortCode()
                                     + "&departure_date=" + ApplicationData.masterRoute.getOriginDate());
 
-
-
                     AsyncJsonFetcher asyncTrainFetcher = new AsyncJsonFetcher(RoutePresenter.this);
                     asyncTrainFetcher.delegate = RoutePresenter.this;
-                    asyncTrainFetcher.fetchTrains("http://rata.digitraffic.fi/api/v1/schedules?departure_station="
+                    asyncTrainFetcher.fetchDirectTrains("http://rata.digitraffic.fi/api/v1/schedules?departure_station="
                             + ApplicationData.masterRoute.getOriginClosestStation().getStationShortCode() + "&arrival_station="
                             + ApplicationData.masterRoute.getDestinationClosestStation().getStationShortCode() + "&departure_date="
                             + ApplicationData.masterRoute.getOriginDate());
-
                     break;
                 case 2:
                     Log.d("Handler.what = 2", "Searching for direct track connections between found stations");
                     searchDirectTrackConnection(trainJSON);
+
+                    // Indirect routes here (timetable queries)
+                    AsyncJsonFetcher originStationTimeTableJsonFetcher = new AsyncJsonFetcher(RoutePresenter.this);
+                    originStationTimeTableJsonFetcher.delegate = RoutePresenter.this;
+                    originStationTimeTableJsonFetcher.fetchStationTimeTables("https://rata.digitraffic.fi/api/v1/live-trains?station="
+                            + ApplicationData.masterRoute.getOriginClosestStation().getStationShortCode() + "&departing_trains=50&include_nonstopping=false");
+
+                    AsyncJsonFetcher destinationStationTimeTableJsonFetcher = new AsyncJsonFetcher(RoutePresenter.this);
+                    destinationStationTimeTableJsonFetcher.delegate = RoutePresenter.this;
+                    destinationStationTimeTableJsonFetcher.fetchStationTimeTables("https://rata.digitraffic.fi/api/v1/live-trains?station="
+                            + ApplicationData.masterRoute.getDestinationClosestStation().getStationShortCode() + "&arriving_trains=50&include_nonstopping=false");
+                    break;
+                case 3:
+                    createTrainObjects();
                     progressDialog.dismiss();
                     break;
             }
@@ -242,6 +261,8 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
             return false;
         }
     });
+
+
 
     @Override
     public void onAsyncJsonFetcherComplete(int mode, JSONArray json, boolean jsonException){
@@ -284,11 +305,125 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                     Toast.makeText(this, "Valitettavasti junia ei löytynyt", Toast.LENGTH_SHORT).show();
                 }
                 break;
+            case 3:
+                Log.d("Handler","Creating multitiertimetable-arraylist");
+                if (!jsonException) {
+                    multiTierTimeTables.add(json);
+                } else {
+                    Log.d("multiTierTimeTables", "Something went wrong..");
+                }
+                message.what = 3;
+                handler.sendMessage(message);
+                break;
             default:
                 Log.d("Handler switch", "mode incorrect");
                 break;
         }
     }
+
+
+
+//private List<Train> originStationTrains = new ArrayList<>();
+    protected void createTrainObjects() {
+        int size = multiTierTimeTables.size();
+        Log.d("multiTT size", Integer.toString(size));
+        // Check if there's at least 2 timetables available (origin & destination)
+        if (multiTierTimeTables.size() >= 2) {
+            for (int iterator = 0; iterator < multiTierTimeTables.size(); iterator++) {
+                Log.d("createTrainObjects", "iterator " + Integer.toString(iterator));
+                JSONObject train;
+                JSONArray trainData = multiTierTimeTables.get(iterator);
+                // Create new object-arraylist inside arraylist
+                stationTrains.add(new ArrayList<Train>());
+                for (int i = 0; i < trainData.length(); i++) {
+                    try {
+                        train = trainData.getJSONObject(i);
+                        JSONArray timeTableRows = train.getJSONArray("timeTableRows");
+                        if (train.getString("trainCategory").matches("Commuter|Locomotive|Long-distance")) {
+                            // Create new Train object and add data to it
+                            int position = stationTrains.size() - 1;
+                            stationTrains.get(position).add(new Train());
+                            int inner_position = stationTrains.get(position).size() - 1;
+
+                            stationTrains.get(position).get(inner_position).setTrainNumber(train.getInt("trainNumber"));
+                            stationTrains.get(position).get(inner_position).setDepartureDate(train.getString("departureDate"));
+                            stationTrains.get(position).get(inner_position).setOperatorUICCode(train.getInt("operatorUICCode"));
+                            stationTrains.get(position).get(inner_position).setOperatorShortCode(train.getString("operatorShortCode"));
+                            stationTrains.get(position).get(inner_position).setTrainType(train.getString("trainType"));
+                            stationTrains.get(position).get(inner_position).setTrainCategory(train.getString("trainCategory"));
+                            stationTrains.get(position).get(inner_position).setCommuterLineID(train.getString("commuterLineID"));
+                            stationTrains.get(position).get(inner_position).setRunningCurrently(train.getBoolean("runningCurrently"));
+                            stationTrains.get(position).get(inner_position).setCancelled(train.getBoolean("cancelled"));
+                            stationTrains.get(position).get(inner_position).setVersion(train.getInt("version"));
+
+                            // Add data to TrainTimeTables-arraylist object within Train object
+                            for (int x = 0; x < timeTableRows.length(); x++) {
+                                JSONObject tt = timeTableRows.getJSONObject(x);
+                                if (tt.getBoolean("trainStopping") && tt.getBoolean("commercialStop")) {
+                                    stationTrains.get(position).get(inner_position).createTimeTableRow();
+                                    int index = stationTrains.get(position).get(inner_position).timeTableRows.size() - 1;
+                                    stationTrains.get(position).get(inner_position).timeTableRows.get(index).setStationShortCode(tt.getString("stationShortCode"));
+                                    stationTrains.get(position).get(inner_position).timeTableRows.get(index).setStationUICCode(Integer.parseInt(tt.getString("stationUICCode")));
+                                    stationTrains.get(position).get(inner_position).timeTableRows.get(index).setCountryCode(tt.getString("countryCode"));
+                                    stationTrains.get(position).get(inner_position).timeTableRows.get(index).setType(tt.getString("type"));
+                                    stationTrains.get(position).get(inner_position).timeTableRows.get(index).setTrainStopping(tt.getBoolean("trainStopping"));
+                                    stationTrains.get(position).get(inner_position).timeTableRows.get(index).setCommercialStop(tt.getBoolean("commercialStop"));
+                                    stationTrains.get(position).get(inner_position).timeTableRows.get(index).setCommercialTrack(tt.getString("commercialTrack"));
+                                    stationTrains.get(position).get(inner_position).timeTableRows.get(index).setCancelled(tt.getBoolean("cancelled"));
+                                    stationTrains.get(position).get(inner_position).timeTableRows.get(index).setScheduledTime(tt.getString("scheduledTime"));
+                                    //originStationTrains.get(position).timeTableRows.get(index).setActualTime(tt.getString("actualTime"));
+                                    //originStationTrains.get(position).timeTableRows.get(index).setDifferenceInMinutes(tt.getInt("differenceInMinutes"));
+                                }
+                            }
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    Log.d("Trainobject", "created");
+                }
+                Log.d("TrainArraylist", "created");
+            }
+        }
+    }
+                      /*
+
+                        Tässä osa alkuperäistä. varmista että uusi toimii ja sitte jtn
+                       // originStationTrains.add(new Train());
+                        //int position = originStationTrains.size() - 1;
+
+                        originStationTrains.get(position).setTrainNumber(train.getInt("trainNumber"));
+                        originStationTrains.get(position).setDepartureDate(train.getString("departureDate"));
+                        originStationTrains.get(position).setOperatorUICCode(train.getInt("operatorUICCode"));
+                        originStationTrains.get(position).setOperatorShortCode(train.getString("operatorShortCode"));
+                        originStationTrains.get(position).setTrainType(train.getString("trainType"));
+                        originStationTrains.get(position).setTrainCategory(train.getString("trainCategory"));
+                        originStationTrains.get(position).setCommuterLineID(train.getString("commuterLineID"));
+                        originStationTrains.get(position).setRunningCurrently(train.getBoolean("runningCurrently"));
+                        originStationTrains.get(position).setCancelled(train.getBoolean("cancelled"));
+                        originStationTrains.get(position).setVersion(train.getInt("version"));
+                        // Add data to TrainTimeTables-arraylist object within Train object
+                        for (int x = 0; x < timeTableRows.length(); x++) {
+                            JSONObject tt = timeTableRows.getJSONObject(x);
+                            if (tt.getBoolean("trainStopping") && tt.getBoolean("commercialStop")) {
+                                originStationTrains.get(position).createTimeTableRow();
+                                int index = originStationTrains.get(position).timeTableRows.size() - 1;
+                                originStationTrains.get(position).timeTableRows.get(index).setStationShortCode(tt.getString("stationShortCode"));
+                                originStationTrains.get(position).timeTableRows.get(index).setStationUICCode(Integer.parseInt(tt.getString("stationUICCode")));
+                                originStationTrains.get(position).timeTableRows.get(index).setCountryCode(tt.getString("countryCode"));
+                                originStationTrains.get(position).timeTableRows.get(index).setType(tt.getString("type"));
+                                originStationTrains.get(position).timeTableRows.get(index).setTrainStopping(tt.getBoolean("trainStopping"));
+                                originStationTrains.get(position).timeTableRows.get(index).setCommercialStop(tt.getBoolean("commercialStop"));
+                                originStationTrains.get(position).timeTableRows.get(index).setCommercialTrack(tt.getString("commercialTrack"));
+                                originStationTrains.get(position).timeTableRows.get(index).setCancelled(tt.getBoolean("cancelled"));
+                                originStationTrains.get(position).timeTableRows.get(index).setScheduledTime(tt.getString("scheduledTime"));
+//                                originStationTrains.get(position).timeTableRows.get(index).setActualTime(tt.getString("actualTime"));
+//                                originStationTrains.get(position).timeTableRows.get(index).setDifferenceInMinutes(tt.getInt("differenceInMinutes"));
+                            }
+
+                        }
+                    }
+*/
+
 
     protected void CreateMultiTierFullRoutes()
     {
@@ -312,6 +447,9 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
 
     }
 
+
+
+
     private void findClosestStations() {
         Log.d("findClosestStations", "Started!");
          //Router router = new Router();
@@ -321,34 +459,24 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         if (ApplicationData.deviceLocationIsOrigin) {
             Log.d("findClosestStations","Using device location for origin");
 
-            //foundOriginStation = findClosestStationFromPoint(ApplicationData.mLastLocation); // Find closest train station from origin
-            ////////////////////////////////////////////////////////////////////////////
             ApplicationData.masterRoute.setOriginClosestStation(findClosestStationFromPoint(ApplicationData.mLastLocation)); // Find closest train station from origin
             // Get Latitude and Longitude from found closest station and convert into a string
             String originStationLocation = (ApplicationData.masterRoute.getOriginClosestStation().getLatitude() +","+ ApplicationData.masterRoute.getOriginClosestStation().getLongitude());
             String originLocTemp = (ApplicationData.mLastLocation.getLatitude() +","+ ApplicationData.mLastLocation.getLongitude()); // Convert user location from Location to String
-            // KLUP tää alempi tieto pitäs tallentaa johonkin ja käyttää sitä searchDirectTrackConnectionissa plus-aikana?!
+            // TODO tää alempi tieto pitäs tallentaa johonkin ja käyttää sitä searchDirectTrackConnectionissa plus-aikana?!
             trainDataFetcher.GetDistanceAndDuration(originLocTemp, originStationLocation); // Get dist&dur from user location to closest station TODO: Tarvitaanko tätä?
         } else {
             Log.d("findClosestStations","Using other than device location for origin");
             Location mCustomLocation = getLocationFromAddress(ApplicationData.masterRoute.getOriginAddress()); // Convert given address to Location (lat&long)
 
-            //foundOriginStation = findClosestStationFromPoint(mCustomLocation);
-            ///////////////////////////////////////////////////////////////////////////////////
             ApplicationData.masterRoute.setOriginClosestStation(findClosestStationFromPoint(mCustomLocation)); // Find closest train station from converted Location
             // Get Latitude and Longitude from found closest station and convert into a string
             String originStationLocation = (ApplicationData.masterRoute.getOriginClosestStation().getLatitude() +","+ ApplicationData.masterRoute.getOriginClosestStation().getLongitude());
-            // KLUP tää alempi tieto pitäs tallentaa johonkin ja käyttää sitä searchDirectTrackConnectionissa plus-aikana?!
+            // TODO tää alempi tieto pitäs tallentaa johonkin ja käyttää sitä searchDirectTrackConnectionissa plus-aikana?!
             trainDataFetcher.GetDistanceAndDuration(ApplicationData.masterRoute.getOriginAddress(), originStationLocation); // Get dist&dur from user location to closest station. TODO: Tarvitaanko tätä?
         }
-
-
         Log.d("findClosestStations","Fetching destination");
-       // Location destinationLocation = getLocationFromAddress(destination); // Convert given destination address to Location (lat&long)
-       // foundDestinationStation = findClosestStationFromPoint(destinationLocation); // Find closest train station from destination
-        //////////////////////////////////////////////////////////////////////////
         ApplicationData.masterRoute.setDestinationClosestStation(findClosestStationFromPoint(ApplicationData.masterRoute.getDestinationLocation()));
-
     }
 
 
@@ -379,7 +507,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
     private Station findClosestStationFromPoint(Location location) {
         //String[] closestStation = new String[3];
         Station closestStation = new Station();
-        Location pointOrigin = new Location(location);         //////// KLUP jos tyhjä niin kaataa softan
+        Location pointOrigin = new Location(location);         //////// TODO jos tyhjä niin kaataa softan. UPDATE: KAATAAKO EDELLEEN?
         Float closestDist = 9999999999999999999f;
 //stationData.add(new String[] {station.getString("stationName"), station.getString("stationShortCode"), station.getString("latitude"), station.getString("longitude")});
         for (int i = 0; i < ApplicationData.stationData.size(); i++) {
@@ -395,6 +523,8 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         Log.d("Closest station found", closestStation.toString());
         return closestStation;
     }
+
+
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
@@ -477,6 +607,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
     }
 
 
+
     // Custom texts for progressdialog
     private String getCustomProgressDialogMessage(){
         List<String> messageList = new ArrayList<>();
@@ -490,6 +621,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         int i = random.nextInt(messageList.size());
         return messageList.get(i);
     }
+
 
 
     protected void searchDirectTrackConnection(JSONArray json) {
@@ -512,14 +644,14 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                     JSONObject tt = timeTable.getJSONObject(y);
                     if(stationIsRelevant && !stationShortCodes.contains(tt.getString("stationShortCode")))
                     {
-                        Log.d("Adding short code,loop " + y, tt.getString("stationShortCode"));
+                      //  Log.d("Adding short code,loop " + y, tt.getString("stationShortCode"));
                         stationShortCodes.add(tt.getString("stationShortCode"));
                     }
                     if (tt.getString("stationShortCode").equals(ApplicationData.masterRoute.getOriginClosestStation().getStationShortCode()) // [0] = stationshortcode
                             && tt.getString("type").equals("DEPARTURE")) {
                         stationIsRelevant = true;
                         stationShortCodes.add(tt.getString("stationShortCode"));
-                        Log.d("Adding short code,loop " + y, tt.getString("stationShortCode"));
+                       // Log.d("Adding short code,loop " + y, tt.getString("stationShortCode"));
                         // Split string "scheduledTime" into two different strings and convert to more user convenient format
                         // Create StringBuilder and remove last letter ('Z' in json array)
                         StringBuilder sb = new StringBuilder(tt.getString("scheduledTime"));
@@ -754,6 +886,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
     }
 
 
+
     // TODO: Täytyy uudelleennimetä
     protected class TrainDataFetcher extends AsyncTask<String, Void, Void>
     {
@@ -782,6 +915,8 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
             }
             return null;
         }
+
+
 
         public void GetDistanceAndDuration(String origin, String destination)
         {
