@@ -97,6 +97,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
     private List<JSONArray> multiTierTimeTables = new ArrayList<>();
     private List<List<Train>> stationTrains = new ArrayList<>();
 
+
     // TODO: Mitä näistä tarvitaan tulevaisuudessa?
     //boolean listIsComplete;
     //private List<Route> routeList = new ArrayList<>();
@@ -140,20 +141,16 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         Bundle extras = getIntent().getExtras();
         if(!ApplicationData.deviceLocationIsOrigin)
         {
-            // origin = extras.getString("origin");// street address
-            ApplicationData.masterRoute.setOriginAddress(extras.getString("origin")); /////////////////////////////////////////////////
+            ApplicationData.masterRoute.setOriginAddress(extras.getString("origin"));
         }
 
-        // originDate = extras.getString("originDate");
-        ApplicationData.masterRoute.setOriginDate(extras.getString("originDate")); //////////////////////////////////////////////////////
+        ApplicationData.masterRoute.setOriginDate(extras.getString("originDate"));
         try {
-            //  originTime = timeFormat.parse(extras.getString("originTime"));
-            ApplicationData.masterRoute.setOriginTime(timeFormat.parse(extras.getString("originTime")));////////////////////////////////////
+            ApplicationData.masterRoute.setOriginTime(timeFormat.parse(extras.getString("originTime")));
         } catch (ParseException e) {
             e.printStackTrace();
         }
-        //destination = extras.getString("destination"); // Street address
-        ApplicationData.masterRoute.setDestinationAddress(extras.getString("destination")); ////////////////////////////////////////////////
+        ApplicationData.masterRoute.setDestinationAddress(extras.getString("destination"));
 
         if(!ApplicationData.deviceLocationIsOrigin)
         {
@@ -253,11 +250,22 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                             + ApplicationData.masterRoute.getDestinationClosestStation().getStationShortCode() + "&arriving_trains=50&include_nonstopping=false");
                     break;
                 case 3:
+                    // For indirect route, after fetching timetables
                     createTrainObjects();
+                    //searchIndirectTrackConnection();
                     progressDialog.dismiss();
                     break;
+                case 4:
+                    if (trainData != null) {
+                        createFullRouteObjects();
+                    } else {
+                        Log.d("directTrackConnection", "Couldn't find any suitable trains!");
+                        //textView.setText("No direct trains today");
+                        // TODO: siirrä haku seuraavalle päivälle?
+                    }
+                    setAdapter();
+                    break;
             }
-
             return false;
         }
     });
@@ -384,6 +392,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                 }
                 Log.d("TrainArraylist", "created");
             }
+            searchIndirectTrackConnection();
         }
     }
                       /*
@@ -426,7 +435,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
 */
 
 
-    protected void CreateMultiTierFullRoutes()
+    protected void searchIndirectTrackConnection()
     {
         // YKSI VAIHTO //
         // tehdään lista lähtöasemalta lähtevien junien päämääräasemista.
@@ -450,22 +459,33 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         boolean originFound = false;
         // Uloin looppi käy läpi kaikki asemat (origin & destination)
       //  for (int i0 = 0; i0 < stationTrains.size(); i0++) {
-            // Looppi käy läpi kaikki valitun aseman junat
+
+            // Käydään läpi kaikki valitun aseman junat
             for (int i1 = 0; i1 < stationTrains.get(0).size(); i1++) {
-                // Looppi käy läpi kaikki valitun junan aikataululistan pysäkit
+                //Log.d("Origin train", Integer.toString(i1));
+
+                // Käydään läpi kaikki valitun junan aikataululistan pysäkit
                 for (int i2 = 0; i2 < stationTrains.get(0).get(i1).timeTableRows.size(); i2++) {
 
                     // Hyväksy aikatauluista vain lähtöpaikan jälkeiset stopit
                     if (originFound) {
+                        //Log.d("originFound","true");
                         station = stationTrains.get(0).get(i1).timeTableRows.get(i2).getStationShortCode();
-                        // Looppi käy läpi kohdeaseman junat
+
+                        // Käydään läpi kohdeaseman junat
                         for (int x0 = 0; x0 < stationTrains.get(1).size(); x0++) {
-                            // Looppi käy läpi kaikki valitun junan aikataululistan pysäkit
-                            for (int x1 = 0; x1 < stationTrains.get(1).get(x0).timeTableRows.size(); x0++) {
-                                station2 = stationTrains.get(1).get(x0).timeTableRows.get(x0).getStationShortCode();
+                            //Log.d("Destination train", Integer.toString(x0));
+
+                            // Käydään läpi valitun junan aikataulut
+                            for (int x1 = 0; x1 < stationTrains.get(1).get(x0).timeTableRows.size(); x1++) {
+                                station2 = stationTrains.get(1).get(x0).timeTableRows.get(x1).getStationShortCode();
 
                                 // TODO tähän sitten se vertailu
-                                if (station.equals(station2)) {
+                                if (stationTrains.get(0).get(i1).timeTableRows.get(i2).getType().equals("DEPARTURE")
+                                        && stationTrains.get(1).get(x0).timeTableRows.get(x1).getType().equals("ARRIVAL")
+                                        && station.equals(station2)) {
+
+                                    Log.d("indirect route","match found between origTrain " + i1 + " and destTrain " + x0);
                                     // tee fullRoute-objekti löydetystä reitistä
                                     // lisää se ApplicationData.fullRouteListiin
                                     // TODO fullRouteList pusketaan adapteriin createFullRouteObjects():n sisällä, pitää saada muualle. Tai tämä sinne. tai joku jonnekin.
@@ -473,8 +493,8 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                                 }
                             }
                         }
-
                     }
+                    originFound = false;
                     // Tarkista origin vasta lopussa, ettei vertaa originasemaa.
                     if (stationTrains.get(0).get(i1).timeTableRows.get(i2).getStationShortCode().equals(ApplicationData.masterRoute.getOriginClosestStation().getStationShortCode())) {
                         originFound = true;
@@ -664,7 +684,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
     protected void searchDirectTrackConnection(JSONArray json) {
         Log.d("searchDirectTrackConn..", "started");
         // Find text block to put data, JUST FOR DEBUGGING. FINAL DATA DERIVED THROUGH BUNDLES!(?)
-        TextView textView = (TextView) findViewById(R.id.result1);
+        //TextView textView = (TextView) findViewById(R.id.result1);
         String[] scheduledTimeTemp;
         String[] scheduledDate;
         List<LatLng> trainRoute;
@@ -769,24 +789,10 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                 }
             }
 
-            if (trainData != null) {
-                createFullRouteObjects();
-            } else {
-                Log.d("directTrackConnection", "Couldn't find any suitable trains!");
-                textView.setText("No direct trains today");
-                // TODO: siirrä haku seuraavalle päivälle?
-            }
-
-            Log.d("RecyclerView", "called");
-            final RecyclerView.Adapter adapter = new fullRouteAdapter(this, ApplicationData.fullRouteList);
-            recyclerView.setAdapter(adapter);
-            AddItemTouchHelper(adapter);
-
-
-            /// ------- DEV ------ Null box. Use this to show data, debugging purposes
-            //TextView ruutu = (TextView) findViewById(R.id.test);
-            //ruutu.setText("Set depTime: " + masterRoute.originTime + "\n");
-
+            Message message = handler.obtainMessage();
+            message.what = 4;
+            handler.sendMessage(message);
+            Log.d("Handler Message", message.toString());
 
         } catch (Exception e) { // JSONException?
             // If no straight trains found
@@ -794,6 +800,18 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
             // --------DEV---------- KLUP now program should start looking for alternate routes (via stop/multiple stops)
         }
     }
+
+
+
+    protected void setAdapter() {
+        Log.d("RecyclerView", "called");
+        final RecyclerView.Adapter adapter = new fullRouteAdapter(this, ApplicationData.fullRouteList);
+        recyclerView.setAdapter(adapter);
+        AddItemTouchHelper(adapter);
+    }
+
+
+
 
     protected void AddItemTouchHelper(final RecyclerView.Adapter rAdapter)
     {
@@ -868,9 +886,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
 
     private void createFullRouteObjects() {
         // TODO: trainData,trainDataTimeTableArrival, trainDataTimeTableDeparture jokaisesta paikallinen muuttuja(?) ja siitä työnnetään objekteihin
-        ApplicationData.fullRouteList = new ArrayList<>();
-        try
-        {
+        try {
             Log.d("trainData", "Size " + trainData.size());
             if (trainData != null) {
                 for (int index = 0; index < trainData.size(); index++) {

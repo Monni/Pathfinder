@@ -17,6 +17,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.Marker;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import hyy.pathfinder.Interfaces.AppDataInterface;
@@ -44,7 +45,7 @@ public class ApplicationData extends Application
     public static StationList stationData = new StationList(); // get info from current stations. Name, shortCode, latitude and longitude
     public static AppBarLayout routePresenterAppBar;
     public static fullRoute selectedRoute;
-    public static List<fullRoute> fullRouteList;
+    public static List<fullRoute> fullRouteList = new ArrayList<>();
     public static fullRoute masterRoute;
     public static Marker mMarker;
     // Pitää ajaa getApplicationContext(), setApplicationDataCallbacks(), setApplicationDataCallbacksDelegate, setLocationListener(), buildGoogleApiClient ja viimeisenä createLocationRequest() (järjestys oleellinen, nullpointerit herkässä)
