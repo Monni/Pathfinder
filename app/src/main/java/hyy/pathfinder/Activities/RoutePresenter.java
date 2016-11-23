@@ -339,6 +339,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                     try {
                         train = trainData.getJSONObject(i);
                         JSONArray timeTableRows = train.getJSONArray("timeTableRows");
+                        // Accept only commercial trains
                         if (train.getString("trainCategory").matches("Commuter|Locomotive|Long-distance")) {
                             // Create new Train object and add data to it
                             int position = stationTrains.size() - 1;
@@ -443,8 +444,44 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         // vertaillaan kolmannen listan sisältöä DESTATIONSIIN ja katsotaan onko kummassakaan samoja asemia. Jos on, yhteys löydetty josta voidaan parsia junatiedot.
         // jos ei löydy, niin tehdään neljäs lista joka sisältää listan 3 asemilta lähtevien junien tiedot josta taas katsotaan minne ne menevät ja taas vertaillaan. Toista kunnes löytyy yheys.
 
+        // TODO tässä monipolvisen reitinhaun protoilua. Kesken, ei toiminnassa.
+        String station;
+        String station2;
+        boolean originFound = false;
+        // Uloin looppi käy läpi kaikki asemat (origin & destination)
+      //  for (int i0 = 0; i0 < stationTrains.size(); i0++) {
+            // Looppi käy läpi kaikki valitun aseman junat
+            for (int i1 = 0; i1 < stationTrains.get(0).size(); i1++) {
+                // Looppi käy läpi kaikki valitun junan aikataululistan pysäkit
+                for (int i2 = 0; i2 < stationTrains.get(0).get(i1).timeTableRows.size(); i2++) {
 
+                    // Hyväksy aikatauluista vain lähtöpaikan jälkeiset stopit
+                    if (originFound) {
+                        station = stationTrains.get(0).get(i1).timeTableRows.get(i2).getStationShortCode();
+                        // Looppi käy läpi kohdeaseman junat
+                        for (int x0 = 0; x0 < stationTrains.get(1).size(); x0++) {
+                            // Looppi käy läpi kaikki valitun junan aikataululistan pysäkit
+                            for (int x1 = 0; x1 < stationTrains.get(1).get(x0).timeTableRows.size(); x0++) {
+                                station2 = stationTrains.get(1).get(x0).timeTableRows.get(x0).getStationShortCode();
 
+                                // TODO tähän sitten se vertailu
+                                if (station.equals(station2)) {
+                                    // tee fullRoute-objekti löydetystä reitistä
+                                    // lisää se ApplicationData.fullRouteListiin
+                                    // TODO fullRouteList pusketaan adapteriin createFullRouteObjects():n sisällä, pitää saada muualle. Tai tämä sinne. tai joku jonnekin.
+                                    // kun kaikki reitit valmiita, puske adapteriin ja lauo.
+                                }
+                            }
+                        }
+
+                    }
+                    // Tarkista origin vasta lopussa, ettei vertaa originasemaa.
+                    if (stationTrains.get(0).get(i1).timeTableRows.get(i2).getStationShortCode().equals(ApplicationData.masterRoute.getOriginClosestStation().getStationShortCode())) {
+                        originFound = true;
+                    }
+                }
+            }
+       // }
     }
 
 
