@@ -128,6 +128,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
 
         // Main logic //////////////
         /// Fetch and parse current train stations from Digitraffic
+        ApplicationData.fullRouteList = new ArrayList<>(); // Todo do I belong here..?
 
         Message message = handler.obtainMessage();
         message.what = 0;
