@@ -33,6 +33,8 @@ public class fullRoute implements Parcelable {
     public List<routeSegment> routeSegmentList = new ArrayList<>();
     public String originDate;
     public Date originTime;
+    private String destinationDate;
+    private Date destinationTime;
 
     private Integer walkDurationToOriginStation;
     private Integer walkDistanceToOriginStation;
@@ -184,6 +186,22 @@ public class fullRoute implements Parcelable {
 
     public void setWalkDistanceFromDestinationStation(Integer walkDistanceFromDestinationStation) {
         this.walkDistanceFromDestinationStation = walkDistanceFromDestinationStation;
+    }
+
+    public String getDestinationDate() {
+        return destinationDate;
+    }
+
+    public void setDestinationDate(String destinationDate) {
+        this.destinationDate = destinationDate;
+    }
+
+    public Date getDestinationTime() {
+        return destinationTime;
+    }
+
+    public void setDestinationTime(Date destinationTime) {
+        this.destinationTime = destinationTime;
     }
 
     /** Parcelable magic below */

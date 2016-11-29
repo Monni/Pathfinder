@@ -45,7 +45,7 @@ public class ApplicationData extends Application
     public static StationList stationData = new StationList(); // get info from current stations. Name, shortCode, latitude and longitude
     public static AppBarLayout routePresenterAppBar;
     public static fullRoute selectedRoute;
-    public static List<fullRoute> fullRouteList;
+   // public static List<fullRoute> fullRouteList;
     public static fullRoute masterRoute;
     public static Marker mMarker;
     // Pitää ajaa getApplicationContext(), setApplicationDataCallbacks(), setApplicationDataCallbacksDelegate, setLocationListener(), buildGoogleApiClient ja viimeisenä createLocationRequest() (järjestys oleellinen, nullpointerit herkässä)
