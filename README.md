@@ -25,3 +25,4 @@ TTOW0620 + TTOW0610 course project
 - 22.11 - 4h - Laitteen reagointi orientaatiomuutokseen, korjailtu reittien näyttämistä kartalla
 - 28.11 - 5h - Loppudokumentaatio ja luokkakaavio
 - 29.11 - 5h - Loppudokumentaatio ja aktiviteettikaavio
+- 30.11 - 2h - Monipolvisten reittien debuggaus
