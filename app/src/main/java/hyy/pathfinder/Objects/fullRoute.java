@@ -252,9 +252,16 @@ public class fullRoute implements Parcelable {
 
             LatLngBounds bounds = builder.build();
 
+
             int padding = 80; // offset from edges of the map in pixels
             CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
-            ApplicationData.mMap.animateCamera(cu);
+            try {
+                ApplicationData.mMap.animateCamera(cu);// TODO meitsi kaataa softan tällä. Miika
+            } catch (IllegalStateException e) {
+                e.printStackTrace();
+            }
+
+
         }
         catch(NullPointerException e)
         {

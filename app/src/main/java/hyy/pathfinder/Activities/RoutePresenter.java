@@ -80,8 +80,6 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
 
     // Timeformat used to general time conversion between device and Digitraffic
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.ENGLISH);
-    private final SimpleDateFormat dateTimeFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm");
-    // Parsed JSONdata from digitraffic
 
     //private List<String[]> trainData = new ArrayList<>();
     private List<routeSegment> trainData = new ArrayList<>();
@@ -97,7 +95,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
     private GoogleMap fullRouteMap;
 
     private List<JSONArray> multiTierTimeTables = new ArrayList<>();
-    private List<List<Train>> stationTrains = new ArrayList<>();
+    private List<List<Train>> stationTrains;
     private List<fullRoute> fullRouteList;
 
 
@@ -132,6 +130,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         // Main logic //////////////
         /// Fetch and parse current train stations from Digitraffic
         fullRouteList = new ArrayList<>(); // Todo do I belong here..?
+        stationTrains = new ArrayList<>();
 
         Message message = handler.obtainMessage();
         message.what = 0;
@@ -246,12 +245,12 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                     AsyncJsonFetcher originStationTimeTableJsonFetcher = new AsyncJsonFetcher(RoutePresenter.this);
                     originStationTimeTableJsonFetcher.delegate = RoutePresenter.this;
                     originStationTimeTableJsonFetcher.fetchStationTimeTables("https://rata.digitraffic.fi/api/v1/live-trains?station="
-                            + ApplicationData.masterRoute.getOriginClosestStation().getStationShortCode() + "&departing_trains=50&include_nonstopping=false");
+                            + ApplicationData.masterRoute.getOriginClosestStation().getStationShortCode() + "&departing_trains=20&include_nonstopping=false");
 
                     AsyncJsonFetcher destinationStationTimeTableJsonFetcher = new AsyncJsonFetcher(RoutePresenter.this);
                     destinationStationTimeTableJsonFetcher.delegate = RoutePresenter.this;
                     destinationStationTimeTableJsonFetcher.fetchStationTimeTables("https://rata.digitraffic.fi/api/v1/live-trains?station="
-                            + ApplicationData.masterRoute.getDestinationClosestStation().getStationShortCode() + "&arriving_trains=50&include_nonstopping=false");
+                            + ApplicationData.masterRoute.getDestinationClosestStation().getStationShortCode() + "&arriving_trains=20&include_nonstopping=false");
                     break;
                 case 3:
                     // For indirect route, after fetching timetables
@@ -268,8 +267,9 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                         //textView.setText("No direct trains today");
                         // TODO: siirrä haku seuraavalle päivälle?
                     }
-
                     break;
+                case 5:
+                    setAdapter();
             }
             return false;
         }
@@ -385,15 +385,13 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                                     stationTrains.get(position).get(inner_position).timeTableRows.get(index).setCommercialTrack(tt.getString("commercialTrack"));
                                     stationTrains.get(position).get(inner_position).timeTableRows.get(index).setCancelled(tt.getBoolean("cancelled"));
                                     stationTrains.get(position).get(inner_position).timeTableRows.get(index).setScheduledTime(tt.getString("scheduledTime"));
-                                    //originStationTrains.get(position).timeTableRows.get(index).setActualTime(tt.getString("actualTime"));
-                                    //originStationTrains.get(position).timeTableRows.get(index).setDifferenceInMinutes(tt.getInt("differenceInMinutes"));
                                 }
                             }
                         }
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
-                    Log.d("Trainobject", "created");
+                   // Log.d("Trainobject", "created");
                 }
                 Log.d("TrainArraylist", "created");
             }
@@ -420,133 +418,154 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         // jos listoilla ei ole samoja asemia, niin iteroidaan listan ORIGSTATIONS asemat läpi ja tehdään kolmas lista joka sisältää päämääräasemat jokaiselta ORIGSTATIONS listalla olevan aseman lähtevistä junista.
         // vertaillaan kolmannen listan sisältöä DESTATIONSIIN ja katsotaan onko kummassakaan samoja asemia. Jos on, yhteys löydetty josta voidaan parsia junatiedot.
         // jos ei löydy, niin tehdään neljäs lista joka sisältää listan 3 asemilta lähtevien junien tiedot josta taas katsotaan minne ne menevät ja taas vertaillaan. Toista kunnes löytyy yheys.
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... voids) {
+            // TODO tässä monipolvisen reitinhaun protoilua. Kesken, ei toiminnassa.
+                String stationShortCode;
+                String station2ShortCode;
+                routeSegment station1 = new routeSegment();
+                routeSegment station2 = new routeSegment();
+                String[] datetime;
+                boolean originFound = false;
 
-        // TODO tässä monipolvisen reitinhaun protoilua. Kesken, ei toiminnassa.
-        String stationShortCode;
-        String station2ShortCode;
-        routeSegment station1 = new routeSegment();
-        routeSegment station2 = new routeSegment();
-        String[] datetime;
-        boolean originFound = false;
+                // For route time comparison
+                Date route1;
+                Date route2;
 
-        // For route time comparison
-        Date route1;
-        Date route2;
+                // For the whole route
+                String masterDepartureDate = "";
+                String masterArrivalDate;
 
-        // For the whole route
-        String masterDepartureDate = "";
-        String masterArrivalDate;
-
-
-        // Uloin looppi käy läpi kaikki asemat (origin & destination)
-      //  for (int i0 = 0; i0 < stationTrains.size(); i0++) {
-
-            // Käydään läpi kaikki valitun aseman junat
-            for (int i1 = 0; i1 < stationTrains.get(0).size(); i1++) {
-                //Log.d("Origin train", Integer.toString(i1));
-                originFound = false;
-
-                // Käydään läpi kaikki valitun junan aikataululistan pysäkit
-                for (int i2 = 0; i2 < stationTrains.get(0).get(i1).timeTableRows.size(); i2++) {
-
-                    // Hyväksy aikatauluista vain lähtöpaikan jälkeiset stopit
-                    if (originFound) {
-                        //Log.d("originFound","true");
-                        stationShortCode = stationTrains.get(0).get(i1).timeTableRows.get(i2).getStationShortCode();
-
-                        // Käydään läpi kohdeaseman junat
-                        for (int x0 = 0; x0 < stationTrains.get(1).size(); x0++) {
-                            //Log.d("Destination train", Integer.toString(x0));
-
-                            // Käydään läpi valitun junan aikataulut
-                            for (int x1 = 0; x1 < stationTrains.get(1).get(x0).timeTableRows.size(); x1++) {
-                                station2ShortCode = stationTrains.get(1).get(x0).timeTableRows.get(x1).getStationShortCode();
-
-                                String[] routeTimeDate1 = convertTime(stationTrains.get(0).get(i1).timeTableRows.get(i2).getScheduledTime());
-                                route1 = convertStringToDate(routeTimeDate1[1]);
-                                String route1Date = routeTimeDate1[0];
-                                String[] routeTimeDate2 =  convertTime(stationTrains.get(1).get(x0).timeTableRows.get(x1).getScheduledTime());
-                                route2 = convertStringToDate(routeTimeDate2[1]);
-                                String route2Date = routeTimeDate2[0];
-
-                                // TODO tähän sitten se vertailu
-                                if (stationTrains.get(0).get(i1).timeTableRows.get(i2).getType().equals("DEPARTURE")
-                                        && stationTrains.get(1).get(x0).timeTableRows.get(x1).getType().equals("ARRIVAL")
-                                        && stationShortCode.equals(station2ShortCode) && route1.before(route2)) {
-
-                                    Log.d("TIME", route1.toString());
-                                    Log.d("TIME", route2.toString());
+                boolean runsDirectly;
 
 
-                                        Log.d("SHORTCODE",stationShortCode);
-                                        Log.d("SHORTCODE",station2ShortCode);
+                // Uloin looppi käy läpi kaikki asemat (origin & destination)
+                //  for (int i0 = 0; i0 < stationTrains.size(); i0++) {
 
-                                        Log.d("indirect route","match found between origTrain " + i1 + " and destTrain " + x0);
+                // Käydään läpi kaikki valitun aseman junat
+                for (int i1 = 0; i1 < stationTrains.get(0).size(); i1++) {
+                    //Log.d("Origin train", Integer.toString(i1));
+                    originFound = false;
 
-                                        // Train route from origin station, stop data of point where trains collide
-                                        datetime = convertTime(stationTrains.get(0).get(i1).timeTableRows.get(i2).getScheduledTime());
-                                        station1.setArrTime(datetime[1]);
-                                        station1.setArrTrack(stationTrains.get(0).get(i1).timeTableRows.get(i2).getCommercialTrack());
-                                        // Second station
-                                        datetime = convertTime(stationTrains.get(1).get(x0).timeTableRows.get(x1).getScheduledTime());
-                                        station2.setDepTime(datetime[1]);
-                                        station2.setDepTrack(stationTrains.get(1).get(x0).timeTableRows.get(x1).getCommercialTrack());
-                                        station2.setDepType(stationTrains.get(1).get(x0).timeTableRows.get(x1).getType());
-                                        // Instantly search for destination point data to create card
-                                        int[] values = findDestinationTimeTable(1,x0);
-                                        datetime = convertTime(stationTrains.get(values[0]).get(values[1]).timeTableRows.get(values[2]).getScheduledTime());
-                                        masterArrivalDate = datetime[0];
-                                        station2.setArrTime(datetime[1]);
-                                        station2.setArrTrack(stationTrains.get(values[0]).get(values[1]).timeTableRows.get(values[2]).getCommercialTrack());
+                   // runsDirectly = checkDirectRoute(0, i1);
+               //     if (!runsDirectly) {
 
-                                        // Copy masterRoute and put copy into arraylist
-                                        fullRoute route = new fullRoute(ApplicationData.masterRoute);
-                                        route.setOriginDate(masterDepartureDate);
-                                        route.setDestinationDate(masterArrivalDate);
-                                        // route.setOriginTime();
-                                        route.addRouteSegment();
-                                        int iterator = route.routeSegmentList.size() - 1;
-                                        route.routeSegmentList.get(iterator).setDepTime(station1.getDepTime());
-                                        route.routeSegmentList.get(iterator).setDepType(station1.getDepType());
-                                        route.routeSegmentList.get(iterator).setDepTrack(station1.getDepTrack());
-                                        route.routeSegmentList.get(iterator).setArrTrack(station1.getArrTrack());
-                                        route.routeSegmentList.get(iterator).setArrTime(station1.getArrTime());
-                                        route.addRouteSegment();
-                                        iterator = route.routeSegmentList.size() - 1;
-                                        route.routeSegmentList.get(iterator).setDepTime(station2.getDepTime());
-                                        route.routeSegmentList.get(iterator).setDepType(station2.getDepType());
-                                        route.routeSegmentList.get(iterator).setDepTrack(station2.getDepTrack());
-                                        route.routeSegmentList.get(iterator).setArrTrack(station2.getArrTrack());
-                                        route.routeSegmentList.get(iterator).setArrTime(station2.getArrTime());
+                        // Käydään läpi kaikki valitun junan aikataululistan pysäkit
+                        for (int i2 = 0; i2 < stationTrains.get(0).get(i1).timeTableRows.size(); i2++) {
 
-                                        fullRouteList.add(route);
-                                        //int iterator = fullRouteList.size() - 1; // Need to know where in dynamic loop
+                            // Hyväksy aikatauluista vain lähtöpaikan jälkeiset stopit
+                            if (originFound) {
+                                //Log.d("originFound","true");
+                                stationShortCode = stationTrains.get(0).get(i1).timeTableRows.get(i2).getStationShortCode();
 
+                                // Käydään läpi kohdeaseman junat
+                                for (int x0 = 0; x0 < stationTrains.get(1).size(); x0++) {
+                                    //Log.d("Destination train", Integer.toString(x0));
+
+                                    // Käydään läpi valitun junan aikataulut
+                                    for (int x1 = 0; x1 < stationTrains.get(1).get(x0).timeTableRows.size(); x1++) {
+                                        station2ShortCode = stationTrains.get(1).get(x0).timeTableRows.get(x1).getStationShortCode();
+
+                                        String[] routeTimeDate1 = convertTime(stationTrains.get(0).get(i1).timeTableRows.get(i2).getScheduledTime());
+                                        route1 = convertStringToDate(routeTimeDate1[1]);
+                                        String[] routeTimeDate2 = convertTime(stationTrains.get(1).get(x0).timeTableRows.get(x1).getScheduledTime());
+                                        route2 = convertStringToDate(routeTimeDate2[1]);
+
+                                        int time1 = Integer.parseInt(routeTimeDate1[1].substring(0, 2));
+                                        int time2 = Integer.parseInt(routeTimeDate2[1].substring(0, 2));
+                                        int timeBetween = time2 - time1;
+                                        // TODO tähän sitten se vertailu
+                                        if (stationTrains.get(0).get(i1).timeTableRows.get(i2).getType().equals("DEPARTURE")
+                                                && stationTrains.get(1).get(x0).timeTableRows.get(x1).getType().equals("ARRIVAL")
+                                                && stationShortCode.equals(station2ShortCode) && route1.before(route2) && timeBetween <= 2) {
+                                            Log.d("indirect route", "match found between origTrain " + i1 + " and destTrain " + x0);
+                                            Log.d("SHORTCODE", stationShortCode);
+                                            Log.d("SHORTCODE", station2ShortCode);
+                                            Log.d("timeBetween", Integer.toString(timeBetween));
+                                            Log.d("TIME", route1.toString());
+                                            Log.d("TIME", route2.toString());
 
 
-                                        // tee fullRoute-objekti löydetystä reitistä
-                                        // lisää se ApplicationData.fullRouteListiin
-                                        // TODO fullRouteList pusketaan adapteriin createFullRouteObjects():n sisällä, pitää saada muualle. Tai tämä sinne. tai joku jonnekin.
-                                        // kun kaikki reitit valmiita, puske adapteriin ja lauo.
+                                            // Train route from origin station, stop data of point where trains collide
+                                            datetime = convertTime(stationTrains.get(0).get(i1).timeTableRows.get(i2).getScheduledTime());
+                                            station1.setArrTime(datetime[1]);
+                                            station1.setArrTrack(stationTrains.get(0).get(i1).timeTableRows.get(i2).getCommercialTrack());
+                                            // Second station
+                                            datetime = convertTime(stationTrains.get(1).get(x0).timeTableRows.get(x1).getScheduledTime());
+                                            station2.setDepTime(datetime[1]);
+                                            station2.setDepTrack(stationTrains.get(1).get(x0).timeTableRows.get(x1).getCommercialTrack());
+                                            station2.setDepType(stationTrains.get(1).get(x0).timeTableRows.get(x1).getType());
+                                            // Instantly search for destination point data to create card
+                                            int[] values = findDestinationTimeTable(1, x0);
+                                            datetime = convertTime(stationTrains.get(values[0]).get(values[1]).timeTableRows.get(values[2]).getScheduledTime());
+                                            masterArrivalDate = datetime[0];
+                                            station2.setArrTime(datetime[1]);
+                                            station2.setArrTrack(stationTrains.get(values[0]).get(values[1]).timeTableRows.get(values[2]).getCommercialTrack());
+
+                                            // Copy masterRoute and put copy into arraylist
+                                            fullRoute route = new fullRoute(ApplicationData.masterRoute);
+                                            route.setOriginDate(masterDepartureDate);
+                                            route.setDestinationDate(masterArrivalDate);
+                                            route.addRouteSegment();
+                                            int iterator = route.routeSegmentList.size() - 1;
+                                            route.routeSegmentList.get(iterator).setDepTime(station1.getDepTime());
+                                            route.routeSegmentList.get(iterator).setDepType(station1.getDepType());
+                                            route.routeSegmentList.get(iterator).setDepTrack(station1.getDepTrack());
+                                            route.routeSegmentList.get(iterator).setArrTrack(station1.getArrTrack());
+                                            route.routeSegmentList.get(iterator).setArrTime(station1.getArrTime());
+                                            route.addRouteSegment();
+                                            iterator = route.routeSegmentList.size() - 1;
+                                            route.routeSegmentList.get(iterator).setDepTime(station2.getDepTime());
+                                            route.routeSegmentList.get(iterator).setDepType(station2.getDepType());
+                                            route.routeSegmentList.get(iterator).setDepTrack(station2.getDepTrack());
+                                            route.routeSegmentList.get(iterator).setArrTrack(station2.getArrTrack());
+                                            route.routeSegmentList.get(iterator).setArrTime(station2.getArrTime());
+
+                                            // Create fullRoute-object of found route
+                                            fullRouteList.add(route);
+                                        }
                                     }
                                 }
                             }
-                        }
-                        // Tarkista origin vasta lopussa, ettei vertaa originasemaa.
-                        if (stationTrains.get(0).get(i1).timeTableRows.get(i2).getStationShortCode().equals(ApplicationData.masterRoute.getOriginClosestStation().getStationShortCode())) {
-                            originFound = true;
-                            datetime = convertTime(stationTrains.get(0).get(i1).timeTableRows.get(i2).getScheduledTime());
-                            masterDepartureDate = datetime[0];
-                            station1.setDepTime(datetime[1]);
-                            station1.setDepTrack(stationTrains.get(0).get(i1).timeTableRows.get(i2).getCommercialTrack());
-                            station1.setDepType(stationTrains.get(0).get(i1).timeTableRows.get(i2).getType());
+                            // Tarkista origin vasta lopussa, ettei vertaa originasemaa.
+                            if (stationTrains.get(0).get(i1).timeTableRows.get(i2).getStationShortCode().equals(ApplicationData.masterRoute.getOriginClosestStation().getStationShortCode())) {
+                                originFound = true;
+                                datetime = convertTime(stationTrains.get(0).get(i1).timeTableRows.get(i2).getScheduledTime());
+                                masterDepartureDate = datetime[0];
+                                station1.setDepTime(datetime[1]);
+                                station1.setDepTrack(stationTrains.get(0).get(i1).timeTableRows.get(i2).getCommercialTrack());
+                                station1.setDepType(stationTrains.get(0).get(i1).timeTableRows.get(i2).getType());
+                            }
+
                         }
                     }
-                }
-
+             //   }
+                Message message = handler.obtainMessage();
+                message.what = 5;
+                handler.sendMessage(message);
+                return null;
+            }
+        }.execute();
     }
 
 
+
+
+    private boolean checkDirectRoute(int i, int i1) {
+        boolean runsDirectly = false;
+        for (int i2 = 0; i2 < stationTrains.get(i).get(i1).timeTableRows.size(); i2++) {
+            String stationShortCode = stationTrains.get(i).get(i1).timeTableRows.get(i2).getStationShortCode();
+            if (stationShortCode.equals(ApplicationData.masterRoute.getDestinationClosestStation().getStationShortCode())) {
+                Log.d("station", stationShortCode);
+                Log.d("stationDest", ApplicationData.masterRoute.getDestinationClosestStation().getStationShortCode());
+                runsDirectly = true;
+                Log.d("checkDirectRoute", "Train runs directly, ignoring" + i1);
+            }
+        }
+        Log.d("runsDirectly", Boolean.toString(runsDirectly));
+        return runsDirectly;
+    }
 
     private Date convertStringToDate(String time) {
         Date data = new Date();
@@ -909,7 +928,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
 
     protected void setAdapter() {
         Log.d("RecyclerView", "called");
-        final RecyclerView.Adapter adapter = new fullRouteAdapter(this, fullRouteList);
+        final RecyclerView.Adapter adapter = new fullRouteAdapter(RoutePresenter.this, fullRouteList);
         recyclerView.setAdapter(adapter);
         AddItemTouchHelper(adapter);
     }
