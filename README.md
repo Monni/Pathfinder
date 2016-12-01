@@ -26,3 +26,5 @@ TTOW0620 + TTOW0610 course project
 - 28.11 - 5h - Loppudokumentaatio ja luokkakaavio
 - 29.11 - 5h - Loppudokumentaatio ja aktiviteettikaavio
 - 30.11 - 2h - Monipolvisten reittien debuggaus
+- 30.11 - 6h - Loppudokumentointi
+- 31.11 - 2h - Loppudokumentointi
