@@ -53,6 +53,7 @@ public class routeSegmentAdapter extends RecyclerView.Adapter<routeSegmentAdapte
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, int position) {
         routeSegment segment = routeSegmentList.get(position);
+
         viewHolder.depDateTextView.setText(segment.getDepDate());
         viewHolder.depTimeTextView.setText(segment.getDepTime());
         viewHolder.depTrackTextView.setText(segment.getDepTrack());
@@ -60,7 +61,8 @@ public class routeSegmentAdapter extends RecyclerView.Adapter<routeSegmentAdapte
         viewHolder.trainNumberTextView.setText(segment.getTrainNumber());
         viewHolder.arrTimeTextView.setText(segment.getArrTime());
         viewHolder.arrTrackTextView.setText(segment.getArrTrack());
-
+            viewHolder.originStationIdTextView.setText(ApplicationData.stationData.getStationName(segment.getOriginStationName()));
+            viewHolder.destinationStationIdTextView.setText(ApplicationData.stationData.getStationName(segment.getDestinationStationName()));
 
     }
 
@@ -74,6 +76,8 @@ public class routeSegmentAdapter extends RecyclerView.Adapter<routeSegmentAdapte
         public TextView depTrackTextView;
         public TextView arrTimeTextView;
         public TextView arrTrackTextView;
+        public TextView originStationIdTextView;
+        public TextView destinationStationIdTextView;
 
 
         public ViewHolder (View itemView) {
@@ -87,12 +91,14 @@ public class routeSegmentAdapter extends RecyclerView.Adapter<routeSegmentAdapte
             depTrackTextView = (TextView) itemView.findViewById(R.id.depTrackTextView);
             arrTimeTextView = (TextView) itemView.findViewById(R.id.arrTimeTextView);
             arrTrackTextView = (TextView) itemView.findViewById(R.id.arrTrackTextView);
+            originStationIdTextView = (TextView) itemView.findViewById(R.id.originStationIdTV);
+            destinationStationIdTextView = (TextView) itemView.findViewById(R.id.destinationStationIdTV);
             // add click listener for a card
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     int position = getAdapterPosition();
-                    Toast.makeText(context, "Velp!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, "Halp!", Toast.LENGTH_SHORT).show();
                     //routeSegmentList.get(position).DrawSegmentInMap();
                     ApplicationData.mMap.clear();
                     ApplicationData.selectedRoute.routeSegmentList.get(position).DrawSegmentInMap();

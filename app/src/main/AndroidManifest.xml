@@ -56,7 +56,7 @@
             android:label="Segmentpresenter"
             android:theme="@style/NoActionBar" />
 
-        <activity android:name=".Splash"
+        <activity android:name=".Activities.Splash"
             android:theme="@style/NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

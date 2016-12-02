@@ -39,6 +39,9 @@ public class routeSegment implements Parcelable, RouterResponse {
     private PolylineOptions polylineOptions;
     private Boolean isTrainSegment;
     private List<LatLng> trainTrackData; // TODO: parempi nimi tälle? sisältää juna-asemat joidenka läpi juna kulkee.
+    private String originStationName;
+    private String destinationStationName;
+    private String segmentType;
 
     public List<LatLng> getTrainTrackData() {
         return trainTrackData;
@@ -200,6 +203,30 @@ public class routeSegment implements Parcelable, RouterResponse {
         this.arrDate = arrDate;
     }
 
+    public String getOriginStationName() {
+        return originStationName;
+    }
+
+    public void setOriginStationName(String originStationName) {
+        this.originStationName = originStationName;
+    }
+
+    public String getDestinationStationName() {
+        return destinationStationName;
+    }
+
+    public void setDestinationStationName(String destinationStationName) {
+        this.destinationStationName = destinationStationName;
+    }
+
+    public String getSegmentType() {
+        return segmentType;
+    }
+
+    public void setSegmentType(String segmentType) {
+        this.segmentType = segmentType;
+    }
+
     public void BuildPolylineOptions(Context Context)
     {
         if(isTrainSegment)
@@ -242,6 +269,9 @@ public class routeSegment implements Parcelable, RouterResponse {
         arrTrack = in.readString();
         arrDate = in.readString();
         arrTime = in.readString();
+        originStationName = in.readString();
+        destinationStationName = in.readString();
+        segmentType = in.readString();
     }
 
     @Override
@@ -261,6 +291,9 @@ public class routeSegment implements Parcelable, RouterResponse {
         dest.writeString(arrTrack);
         dest.writeString(arrDate);
         dest.writeString(arrTime);
+        dest.writeString(originStationName);
+        dest.writeString(destinationStationName);
+        dest.writeString(segmentType);
     }
 
     @SuppressWarnings("unused")

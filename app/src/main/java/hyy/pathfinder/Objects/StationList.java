@@ -25,4 +25,15 @@ public class StationList extends ArrayList<Station>
         Log.d("StationList", "Coordinates not found! Returning null.");
         return null;
     }
+
+    // Translate stationShortCode into full stationName
+    public String getStationName(String shortCode) {
+        for (int i = 0; i < this.size(); i++) {
+            if (this.get(i).getStationShortCode().equals(shortCode)) {
+                return this.get(i).getStationName();
+            }
+        }
+        Log.d("StationList", "Matching station not found! Returning null.");
+        return "null";
+    }
 }

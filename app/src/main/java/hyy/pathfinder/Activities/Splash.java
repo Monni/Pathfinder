@@ -1,11 +1,11 @@
-package hyy.pathfinder;
+package hyy.pathfinder.Activities;
 
 import android.content.Intent;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
-import hyy.pathfinder.Activities.MainActivity;
+import hyy.pathfinder.R;
 
 public class Splash extends AppCompatActivity {
 
