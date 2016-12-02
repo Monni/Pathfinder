@@ -348,67 +348,67 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                 Log.d("createTrainObjects", "iterator " + Integer.toString(iterator));
                 JSONObject train;
                 JSONArray trainData = multiTierTimeTables.get(iterator);
-                // Create new object-arraylist inside arraylist
-                stationTrains.add(new ArrayList<Train>());
-                for (int i = 0; i < trainData.length(); i++) {
-                    try {
-                        train = trainData.getJSONObject(i);
-                        JSONArray timeTableRows = train.getJSONArray("timeTableRows");
-                        // Accept only commercial trains
-                        if (train.getString("trainCategory").matches("Commuter|Locomotive|Long-distance")) {
-                            // Create new Train object and add data to it
-                            int position = stationTrains.size() - 1;
-                            stationTrains.get(position).add(new Train());
-                            int inner_position = stationTrains.get(position).size() - 1;
+                // Check if trainData is not null
+                if (trainData != null) {
+                    // Create new object-arraylist inside arraylist
+                    stationTrains.add(new ArrayList<Train>());
+                    for (int i = 0; i < trainData.length(); i++) {
+                        try {
+                            train = trainData.getJSONObject(i);
+                            JSONArray timeTableRows = train.getJSONArray("timeTableRows");
+                            // Accept only commercial trains
+                            if (train.getString("trainCategory").matches("Commuter|Locomotive|Long-distance")) {
+                                // Create new Train object and add data to it
+                                int position = stationTrains.size() - 1;
+                                stationTrains.get(position).add(new Train());
+                                int inner_position = stationTrains.get(position).size() - 1;
 
-                            stationTrains.get(position).get(inner_position).setTrainNumber(train.getInt("trainNumber"));
-                            stationTrains.get(position).get(inner_position).setDepartureDate(train.getString("departureDate"));
-                            stationTrains.get(position).get(inner_position).setOperatorUICCode(train.getInt("operatorUICCode"));
-                            stationTrains.get(position).get(inner_position).setOperatorShortCode(train.getString("operatorShortCode"));
-                            stationTrains.get(position).get(inner_position).setTrainType(train.getString("trainType"));
-                            stationTrains.get(position).get(inner_position).setTrainCategory(train.getString("trainCategory"));
-                            stationTrains.get(position).get(inner_position).setCommuterLineID(train.getString("commuterLineID"));
-                            stationTrains.get(position).get(inner_position).setRunningCurrently(train.getBoolean("runningCurrently"));
-                            stationTrains.get(position).get(inner_position).setCancelled(train.getBoolean("cancelled"));
-                            stationTrains.get(position).get(inner_position).setVersion(train.getInt("version"));
+                                stationTrains.get(position).get(inner_position).setTrainNumber(train.getInt("trainNumber"));
+                                stationTrains.get(position).get(inner_position).setDepartureDate(train.getString("departureDate"));
+                                stationTrains.get(position).get(inner_position).setOperatorUICCode(train.getInt("operatorUICCode"));
+                                stationTrains.get(position).get(inner_position).setOperatorShortCode(train.getString("operatorShortCode"));
+                                stationTrains.get(position).get(inner_position).setTrainType(train.getString("trainType"));
+                                stationTrains.get(position).get(inner_position).setTrainCategory(train.getString("trainCategory"));
+                                stationTrains.get(position).get(inner_position).setCommuterLineID(train.getString("commuterLineID"));
+                                stationTrains.get(position).get(inner_position).setRunningCurrently(train.getBoolean("runningCurrently"));
+                                stationTrains.get(position).get(inner_position).setCancelled(train.getBoolean("cancelled"));
+                                stationTrains.get(position).get(inner_position).setVersion(train.getInt("version"));
 
-                            // Add data to TrainTimeTables-arraylist object within Train object
-                            for (int x = 0; x < timeTableRows.length(); x++) {
-                                JSONObject tt = timeTableRows.getJSONObject(x);
+                                // Add data to TrainTimeTables-arraylist object within Train object
+                                for (int x = 0; x < timeTableRows.length(); x++) {
+                                    JSONObject tt = timeTableRows.getJSONObject(x);
 
-                                if (tt.getBoolean("trainStopping") && tt.getBoolean("commercialStop")) {
+                                    if (tt.getBoolean("trainStopping") && tt.getBoolean("commercialStop")) {
 
-                                    stationTrains.get(position).get(inner_position).createTimeTableRow();
-                                    int index = stationTrains.get(position).get(inner_position).timeTableRows.size() -1;
-                                    stationTrains.get(position).get(inner_position).timeTableRows.get(index).setStationShortCode(tt.getString("stationShortCode"));
-                                    stationTrains.get(position).get(inner_position).timeTableRows.get(index).setStationUICCode(Integer.parseInt(tt.getString("stationUICCode")));
-                                    stationTrains.get(position).get(inner_position).timeTableRows.get(index).setCountryCode(tt.getString("countryCode"));
-                                    stationTrains.get(position).get(inner_position).timeTableRows.get(index).setType(tt.getString("type"));
-                                    stationTrains.get(position).get(inner_position).timeTableRows.get(index).setTrainStopping(tt.getBoolean("trainStopping"));
-                                    stationTrains.get(position).get(inner_position).timeTableRows.get(index).setCommercialStop(tt.getBoolean("commercialStop"));
-                                    stationTrains.get(position).get(inner_position).timeTableRows.get(index).setCommercialTrack(tt.getString("commercialTrack"));
-                                    stationTrains.get(position).get(inner_position).timeTableRows.get(index).setCancelled(tt.getBoolean("cancelled"));
-                                    stationTrains.get(position).get(inner_position).timeTableRows.get(index).setScheduledTime(tt.getString("scheduledTime"));
+                                        stationTrains.get(position).get(inner_position).createTimeTableRow();
+                                        int index = stationTrains.get(position).get(inner_position).timeTableRows.size() -1;
+                                        stationTrains.get(position).get(inner_position).timeTableRows.get(index).setStationShortCode(tt.getString("stationShortCode"));
+                                        stationTrains.get(position).get(inner_position).timeTableRows.get(index).setStationUICCode(Integer.parseInt(tt.getString("stationUICCode")));
+                                        stationTrains.get(position).get(inner_position).timeTableRows.get(index).setCountryCode(tt.getString("countryCode"));
+                                        stationTrains.get(position).get(inner_position).timeTableRows.get(index).setType(tt.getString("type"));
+                                        stationTrains.get(position).get(inner_position).timeTableRows.get(index).setTrainStopping(tt.getBoolean("trainStopping"));
+                                        stationTrains.get(position).get(inner_position).timeTableRows.get(index).setCommercialStop(tt.getBoolean("commercialStop"));
+                                        stationTrains.get(position).get(inner_position).timeTableRows.get(index).setCommercialTrack(tt.getString("commercialTrack"));
+                                        stationTrains.get(position).get(inner_position).timeTableRows.get(index).setCancelled(tt.getBoolean("cancelled"));
+                                        stationTrains.get(position).get(inner_position).timeTableRows.get(index).setScheduledTime(tt.getString("scheduledTime"));
+                                    }
 
-
+                                    // lisätään junalle tiedot kaikista asemista joidenka läpi kuljetaan, jotta saadaan piirrettyä reitti kartalle
+                                    LatLng stationCoordinates = ApplicationData.stationData.GetLatLng(tt.getString("stationShortCode"));
+                                    String stationLatitude = String.valueOf(stationCoordinates.latitude);
+                                    String stationLongitude = String.valueOf(stationCoordinates.longitude);
+                                    stationTrains.get(position).get(inner_position).trainRouteStations.add(new Station(stationLatitude, stationLongitude, tt.getString("stationUICCode"), tt.getString("stationShortCode"), tt.getString("type"),tt.getString("countryCode")));
                                 }
-
-                                // lisätään junalle tiedot kaikista asemista joidenka läpi kuljetaan, jotta saadaan piirrettyä reitti kartalle
-                                LatLng stationCoordinates = ApplicationData.stationData.GetLatLng(tt.getString("stationShortCode"));
-                                String stationLatitude = String.valueOf(stationCoordinates.latitude);
-                                String stationLongitude = String.valueOf(stationCoordinates.longitude);
-                                stationTrains.get(position).get(inner_position).trainRouteStations.add(new Station(stationLatitude, stationLongitude, tt.getString("stationUICCode"), tt.getString("stationShortCode"), tt.getString("type"),tt.getString("countryCode")));
-
-                             }
+                            }
+                        } catch (JSONException e) {
+                            Log.d("JSONException", "createTrainObjects!");
+                            e.printStackTrace();
                         }
-                    } catch (JSONException e) {
-                        Log.d("JSONException", "createTrainObjects!");
-                        e.printStackTrace();
+                        // Log.d("Trainobject", "created");
                     }
-                   // Log.d("Trainobject", "created");
+                    Log.d("TrainArraylist", "created");
                 }
-                Log.d("TrainArraylist", "created");
-            }
+                }
             searchIndirectTrackConnection();
         }
     }
@@ -421,8 +421,6 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         new AsyncTask<Void, Void, Void>() {
             @Override
             protected Void doInBackground(Void... voids) {
-
-
 
                 List<String> departireTimes = new ArrayList<String>();
                 String stationShortCode;
@@ -438,9 +436,6 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                 // For route time comparison
                 Date route1;
                 Date route2;
-
-                // For the whole route
-                String masterArrivalDate;
 
                 boolean runsDirectly;
 

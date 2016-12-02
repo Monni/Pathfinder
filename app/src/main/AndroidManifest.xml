@@ -32,11 +32,6 @@
         <activity
             android:name=".Activities.MainActivity"
             android:theme="@style/AppTheme">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
@@ -52,13 +47,23 @@
 
         <activity
             android:name=".Activities.RoutePresenter"
-            android:label="Presenter"
-            android:theme="@style/NoActionBar"
             android:configChanges="orientation|screenSize"
-            />
-        <activity android:name=".Activities.segmentPresenter"
+            android:label="Presenter"
+            android:theme="@style/NoActionBar" />
+
+        <activity
+            android:name=".Activities.segmentPresenter"
             android:label="Segmentpresenter"
-            android:theme="@style/NoActionBar"/>
+            android:theme="@style/NoActionBar" />
+
+        <activity android:name=".Splash"
+            android:theme="@style/NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
     </application>
 
 </manifest>
