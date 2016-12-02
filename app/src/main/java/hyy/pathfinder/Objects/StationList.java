@@ -33,7 +33,7 @@ public class StationList extends ArrayList<Station>
                 return this.get(i).getStationName();
             }
         }
-        Log.d("StationList", "Matching station not found! Returning null.");
-        return "null";
+        Log.d("StationList", "Matching station not found! Returning original string.");
+        return shortCode;
     }
 }

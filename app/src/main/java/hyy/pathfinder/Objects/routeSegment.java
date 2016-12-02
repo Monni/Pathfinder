@@ -41,7 +41,6 @@ public class routeSegment implements Parcelable, RouterResponse {
     private List<LatLng> trainTrackData; // TODO: parempi nimi tälle? sisältää juna-asemat joidenka läpi juna kulkee.
     private String originStationName;
     private String destinationStationName;
-    private String segmentType;
 
     public List<LatLng> getTrainTrackData() {
         return trainTrackData;
@@ -219,13 +218,6 @@ public class routeSegment implements Parcelable, RouterResponse {
         this.destinationStationName = destinationStationName;
     }
 
-    public String getSegmentType() {
-        return segmentType;
-    }
-
-    public void setSegmentType(String segmentType) {
-        this.segmentType = segmentType;
-    }
 
     public void BuildPolylineOptions(Context Context)
     {
@@ -271,7 +263,6 @@ public class routeSegment implements Parcelable, RouterResponse {
         arrTime = in.readString();
         originStationName = in.readString();
         destinationStationName = in.readString();
-        segmentType = in.readString();
     }
 
     @Override
@@ -293,7 +284,6 @@ public class routeSegment implements Parcelable, RouterResponse {
         dest.writeString(arrTime);
         dest.writeString(originStationName);
         dest.writeString(destinationStationName);
-        dest.writeString(segmentType);
     }
 
     @SuppressWarnings("unused")

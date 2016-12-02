@@ -61,9 +61,9 @@ public class routeSegmentAdapter extends RecyclerView.Adapter<routeSegmentAdapte
         viewHolder.trainNumberTextView.setText(segment.getTrainNumber());
         viewHolder.arrTimeTextView.setText(segment.getArrTime());
         viewHolder.arrTrackTextView.setText(segment.getArrTrack());
-            viewHolder.originStationIdTextView.setText(ApplicationData.stationData.getStationName(segment.getOriginStationName()));
-            viewHolder.destinationStationIdTextView.setText(ApplicationData.stationData.getStationName(segment.getDestinationStationName()));
-
+        // Ask for translation from stationShortCode to full stationName. If no match, returns the string used to ask translation
+        viewHolder.originStationIdTextView.setText(ApplicationData.stationData.getStationName(segment.getOriginStationName()));
+        viewHolder.destinationStationIdTextView.setText(ApplicationData.stationData.getStationName(segment.getDestinationStationName()));
     }
 
     // view holder class to specify card UI objects
