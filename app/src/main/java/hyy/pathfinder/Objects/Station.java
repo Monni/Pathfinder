@@ -6,6 +6,16 @@ package hyy.pathfinder.Objects;
 
 public class Station
 {
+    private boolean passengerTraffic;
+
+    public boolean isPassengerTraffic() {
+        return passengerTraffic;
+    }
+
+    public void setPassengerTraffic(boolean passengerTraffic) {
+        this.passengerTraffic = passengerTraffic;
+    }
+
     private String latitude;
     private String longitude;
     private String stationName;
@@ -16,7 +26,17 @@ public class Station
 
     public Station(){}
 
-    public Station(String name, String lat, String lng, String UIC, String shortCode, String stationType, String countrycode)
+    public Station(String lat, String lng, String UIC, String shortCode, String stationType, String countrycode)
+    {
+        latitude = lat;
+        longitude = lng;
+        stationUICCode = UIC;
+        stationShortCode = shortCode;
+        type = stationType;
+        countryCode = countrycode;
+    }
+
+    public Station(String name, String lat, String lng, String UIC, String shortCode, String stationType, String countrycode, boolean PassengerTraffic)
     {
         stationName = name;
         latitude = lat;
@@ -25,6 +45,7 @@ public class Station
         stationShortCode = shortCode;
         type = stationType;
         countryCode = countrycode;
+        passengerTraffic = PassengerTraffic;
     }
 
     public String getCountryCode() {

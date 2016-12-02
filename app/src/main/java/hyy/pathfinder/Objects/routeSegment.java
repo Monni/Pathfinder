@@ -44,8 +44,8 @@ public class routeSegment implements Parcelable, RouterResponse {
         return trainTrackData;
     }
 
-    public void setTrainTrackData(List<LatLng> trainTrackData) {
-        this.trainTrackData = trainTrackData;
+    public void setTrainTrackData(List<LatLng> TrainTrackData) {
+        this.trainTrackData = TrainTrackData;
     }
 
     public routeSegment() {

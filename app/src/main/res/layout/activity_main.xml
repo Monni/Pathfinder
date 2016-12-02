@@ -53,7 +53,7 @@
             android:layout_height="wrap_content"
             android:id="@+id/etDestination"
             android:layout_gravity="center_horizontal"
-            android:text="Tammelankatu" />
+            android:text="Oulu" />
 
         <Switch
             android:layout_width="wrap_content"

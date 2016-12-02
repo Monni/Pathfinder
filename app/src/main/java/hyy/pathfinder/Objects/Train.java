@@ -1,5 +1,7 @@
 package hyy.pathfinder.Objects;
 
+import com.google.android.gms.maps.model.LatLng;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,6 +20,7 @@ public class Train {
     private boolean runningCurrently;
     private boolean cancelled;
     private int version;
+    public List<Station> trainRouteStations = new ArrayList<>();
     public List<TrainTimeTables> timeTableRows = new ArrayList<>();
 
 
