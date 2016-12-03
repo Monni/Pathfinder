@@ -12,6 +12,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.PolylineOptions;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import hyy.pathfinder.Data.ApplicationData;
@@ -52,6 +53,7 @@ public class routeSegment implements Parcelable, RouterResponse {
 
     public routeSegment() {
         isTrainSegment = false;
+        trainTrackData = new ArrayList<>();
     }
 
     public routeSegment(List<LatLng> trainRoute, String TrainNumber, String TrainType)
@@ -66,23 +68,42 @@ public class routeSegment implements Parcelable, RouterResponse {
 
     public routeSegment(routeSegment segment)
     {
+        trainNumber = segment.getTrainNumber();
+        trainType = segment.getTrainType();
+        depType = segment.getDepType();
+        depTrack = segment.getDepTrack();
+        depDate = segment.getDepDate();
+        depTime = segment.getDepTime();
+        arrType = segment.getArrType();
+        arrTrack = segment.getArrTrack();
+        arrDate = segment.getArrDate();
+        arrTime = segment.getArrTime();
         trainTrackData = segment.getTrainTrackData();
         origin = segment.getOrigin();
         destination = segment.getDestination();
+        originStationName = segment.getOriginStationName();
+        destinationStationName = segment.getDestinationStationName();
+        isTrainSegment = segment.IsTrainSegment();
     }
 
     public void DrawSegmentInMap()
     {
-        ApplicationData.mMap.addPolyline(getPolylineOptions());
+        try {
+            ApplicationData.mMap.addPolyline(getPolylineOptions());
 
-        // muutetaan karttanäkymää
-        LatLngBounds.Builder builder = new LatLngBounds.Builder();
-        builder.include(getOrigin());
-        builder.include(getDestination());
-        LatLngBounds bounds = builder.build();
-        int padding = 50; // offset from edges of the map in pixels
-        CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
-        ApplicationData.mMap.animateCamera(cu);
+            // muutetaan karttanäkymää
+            LatLngBounds.Builder builder = new LatLngBounds.Builder();
+            builder.include(getOrigin());
+            builder.include(getDestination());
+            LatLngBounds bounds = builder.build();
+            int padding = 50; // offset from edges of the map in pixels
+            CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+            ApplicationData.mMap.animateCamera(cu);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
     }
 
     public Boolean IsTrainSegment() {
@@ -236,8 +257,8 @@ public class routeSegment implements Parcelable, RouterResponse {
         {
             String originString = String.valueOf(origin.latitude) + "," + String.valueOf(origin.longitude);
             String destinationString = String.valueOf(destination.latitude) + "," + String.valueOf(destination.longitude);
-            Router router = new Router();
-            router.GetPolylineOptions(originString, destinationString, Context, this);
+            //Router router = new Router();
+           // router.GetPolylineOptions(originString, destinationString, Context, this);
         }
     }
 

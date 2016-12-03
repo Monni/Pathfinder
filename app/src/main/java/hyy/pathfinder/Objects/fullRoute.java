@@ -30,7 +30,7 @@ public class fullRoute implements Parcelable {
     public Integer duration;
     public Integer distance;
     public PolylineOptions polylineOptions;
-    public List<routeSegment> routeSegmentList = new ArrayList<>();
+    public List<routeSegment> routeSegmentList;
     public String originDate;
     public Date originTime;
     private String destinationDate;
@@ -50,10 +50,12 @@ public class fullRoute implements Parcelable {
     }
 
     public fullRoute() {
+        routeSegmentList = new ArrayList<>();
     }
 
     // Copy constructor
     public fullRoute(fullRoute masterRoute) {
+        routeSegmentList = new ArrayList<>();
         this.originLocation = masterRoute.getOriginLocation();
         this.destinationLocation = masterRoute.getDestinationLocation();
         this.originAddress = masterRoute.getOriginAddress();

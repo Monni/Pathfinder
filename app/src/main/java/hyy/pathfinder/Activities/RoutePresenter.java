@@ -277,7 +277,6 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
     });
 
 
-
     @Override
     public void onAsyncJsonFetcherComplete(int mode, JSONArray json, boolean jsonException){
         Message message = handler.obtainMessage();
@@ -422,11 +421,11 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
             @Override
             protected Void doInBackground(Void... voids) {
 
-                List<String> departireTimes = new ArrayList<>();
+                List<Train> departingTrains = new ArrayList<>();
                 String stationShortCode;
                 String station2ShortCode;
-                routeSegment station1 = new routeSegment();
-                routeSegment station2 = new routeSegment();
+                routeSegment trainSegment1;
+                routeSegment trainSegment2;
                 String[] datetime;
                 boolean originFound;
                 List<LatLng> trackCoordinates;
@@ -434,8 +433,8 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                 boolean stationIsRelevant;
 
                 // For route time comparison
-                Date route1;
-                Date route2;
+                Date routeTime1;
+                Date routeTime2;
 
                // boolean runsDirectly;
 
@@ -443,10 +442,11 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                 // Käydään läpi kaikki valitun aseman junat
                 for (int i1 = 0; i1 < stationTrains.get(0).size(); i1++) {
                     originFound = false;
-
+                    trainSegment1 = new routeSegment();
                         // Käydään läpi kaikki valitun junan aikataululistan pysäkit
                         for (int i2 = 0; i2 < stationTrains.get(0).get(i1).timeTableRows.size(); i2++) {
                             // Hyväksy aikatauluista vain lähtöpaikan jälkeiset stopit
+
                             if (originFound) {
                                 stationShortCode = stationTrains.get(0).get(i1).timeTableRows.get(i2).getStationShortCode();
 
@@ -456,9 +456,9 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                                     for (int x1 = 0; x1 < stationTrains.get(1).get(x0).timeTableRows.size(); x1++) {
                                         station2ShortCode = stationTrains.get(1).get(x0).timeTableRows.get(x1).getStationShortCode();
                                         String[] routeTimeDate1 = convertTime(stationTrains.get(0).get(i1).timeTableRows.get(i2).getScheduledTime());
-                                        route1 = convertStringToDate(routeTimeDate1[1]);
+                                        routeTime1 = convertStringToDate(routeTimeDate1[1]);
                                         String[] routeTimeDate2 = convertTime(stationTrains.get(1).get(x0).timeTableRows.get(x1).getScheduledTime());
-                                        route2 = convertStringToDate(routeTimeDate2[1]);
+                                        routeTime2 = convertStringToDate(routeTimeDate2[1]);
 
                                         int time1 = Integer.parseInt(routeTimeDate1[1].substring(0, 2));
                                         int time2 = Integer.parseInt(routeTimeDate2[1].substring(0, 2));
@@ -470,7 +470,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                                         if (stationTrains.get(0).get(i1).timeTableRows.get(i2).getType().equals("DEPARTURE")
                                                 && stationTrains.get(1).get(x0).timeTableRows.get(x1).getType().equals("ARRIVAL")
                                                 && stationShortCode.equals(station2ShortCode)
-                                                && route1.before(route2)
+                                                && routeTime1.before(routeTime2)
                                                 && timeBetween <= 2) {
 
                                             //Log.d("indirect route", "match found between origTrain " + i1 + " and destTrain " + x0);
@@ -481,16 +481,23 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                                            // Log.d("TIME", route2.toString());
                                             trackCoordinates = new ArrayList<>();
                                             stationIsRelevant = false;
+                                           // station1 = new routeSegment();
+                                            trainSegment2 = new routeSegment();
 
                                             // tarkistetaan duplikaattien varalta
-                                            if(departireTimes.contains(stationTrains.get(0).get(i1).timeTableRows.get(i2).getScheduledTime())){
+                                       /*     if(departingTrains.contains(stationTrains.get(0).get(i1))){
                                                 Log.d("FOUND DUPLICATE!", "BREAKING"); break;}
-                                            else {departireTimes.add(stationTrains.get(0).get(i1).timeTableRows.get(i2).getScheduledTime());}
+                                            else {departingTrains.add(stationTrains.get(0).get(i1));}
 
-                                            if(departireTimes.contains(stationTrains.get(1).get(x0).timeTableRows.get(x1).getScheduledTime())){
+                                            if(departingTrains.contains(stationTrains.get(1).get(x0))){
                                                 Log.d("FOUND DUPLICATE!", "BREAKING"); break;}
-                                            else {departireTimes.add(stationTrains.get(1).get(x0).timeTableRows.get(x1).getScheduledTime());}
-
+                                            else {departingTrains.add(stationTrains.get(1).get(x0));}
+*/
+                                            if(stationTrains.get(1).get(x0).timeTableRows.get(x1).getStationShortCode().equals(ApplicationData.masterRoute.getOriginClosestStation().getStationShortCode()))
+                                            {
+                                                //Log.d("BREAKING", "Middlestation equals originstation.");
+                                                break;
+                                            }
 
                                             // iteroidaan juna-asemat ja seulotaan sieltä käyttäjälle oleelliset koordinaatit talteen piirrettäväksi. Lähtöaseman jälkeen haetaan kaikki uniikit koordinaatit kunnes löytyy käyttäjän päätepysäkki
                                             for(int j = 0;j<stationTrains.get(0).get(i1).trainRouteStations.size();j++)
@@ -499,7 +506,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                                                 // tarkista onko iteroitava lähtöasema ja onko se jo listassa
                                                 if(tempStation.getStationShortCode().equals(ApplicationData.masterRoute.getOriginClosestStation().getStationShortCode())  && !trackCoordinates.contains(new LatLng(Double.parseDouble(tempStation.getLatitude()),Double.parseDouble(tempStation.getLongitude()))))
                                                 {
-                                                    Log.d("asd", "FOUND FIRST STATION! " + tempStation.getStationShortCode());
+                                                   // Log.d("asd", "FOUND FIRST STATION! " + tempStation.getStationShortCode());
                                                     stationIsRelevant = true;
                                                     trackCoordinates.add(new LatLng(Double.parseDouble(tempStation.getLatitude()), Double.parseDouble(tempStation.getLongitude())));
                                                 }
@@ -507,6 +514,13 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                                                 // tarkista onko löytynyt jo käyttäjän lähtöasema ja onko koordinaatti jo listassa
                                                 else if(stationIsRelevant && !trackCoordinates.contains(new LatLng(Double.parseDouble(tempStation.getLatitude()),Double.parseDouble(tempStation.getLongitude()))))
                                                 {
+                                                    //tarkista käydäänkö kohdeasemalla ennen vaihtoasemaa, jolloin reitti on virheellinen
+                                                    if(tempStation.getStationShortCode().equals(ApplicationData.masterRoute.getDestinationClosestStation().getStationShortCode()))
+                                                    {
+                                                        //Log.d("BREAKING", "Destination station was found before middlestation.");
+                                                        stationIsRelevant = false;
+                                                        break;
+                                                    }
                                                   //  Log.d("asd", "FOUND RELEVANT STATION! " + tempStation.getStationShortCode());
                                                     trackCoordinates.add(new LatLng(Double.parseDouble(tempStation.getLatitude()), Double.parseDouble(tempStation.getLongitude())));
                                                 }
@@ -514,24 +528,26 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                                                 // tarkista onko koordinaatti käyttäjän pysäkin koordinaatti. Jos on, se on viimeinen ja looppi voidaan katkaista.
                                                 if(tempStation.getStationShortCode().equals(stationTrains.get(0).get(i1).timeTableRows.get(i2).getStationShortCode()))
                                                 {
-                                                    Log.d("asd", "FOUND LAST STATION! " + tempStation.getStationShortCode());
+                                                    //Log.d("asd", "FOUND MID STATION! " + tempStation.getStationShortCode());
                                                     break;
                                                 }
                                             }
 
-                                            // jos ei löydy lähtöasemaa listasta jostain syystä, skipataan fullrouten tekeminen
+                                            // jos ei löydy lähtöasemaa listasta jostain syystä ennen vaihtoasemaa, skipataan fullrouten tekeminen
                                             if(!stationIsRelevant)
                                             {
+                                                //Log.d("BREAKING", "route is not valid.");
                                                 break;
                                             }
                                             // Train route from origin station, stop data of point where trains collide
                                             datetime = convertTime(stationTrains.get(0).get(i1).timeTableRows.get(i2).getScheduledTime());
-                                            station1.setArrTime(datetime[1]);
-                                            station1.setArrTrack(stationTrains.get(0).get(i1).timeTableRows.get(i2).getCommercialTrack());
-                                            station1.setDestination(ApplicationData.stationData.GetLatLng(stationTrains.get(0).get(i1).timeTableRows.get(i2).getStationShortCode()));
-                                            station1.setDestinationStationName(stationTrains.get(0).get(i1).timeTableRows.get(i2).getStationShortCode());
-                                            station1.setTrainTrackData(trackCoordinates);
-                                            station1.IsTrainSegment(true);
+                                            trainSegment1.setArrTime(datetime[1]);
+                                            trainSegment1.setArrDate(datetime[0]);
+                                            trainSegment1.setArrTrack(stationTrains.get(0).get(i1).timeTableRows.get(i2).getCommercialTrack());
+                                            trainSegment1.setDestination(ApplicationData.stationData.GetLatLng(stationTrains.get(0).get(i1).timeTableRows.get(i2).getStationShortCode()));
+                                            trainSegment1.setDestinationStationName(stationTrains.get(0).get(i1).timeTableRows.get(i2).getStationShortCode());
+                                            trainSegment1.setTrainTrackData(trackCoordinates);
+                                            trainSegment1.IsTrainSegment(true);
                                             trackCoordinates = new ArrayList<>();
                                             stationIsRelevant = false;
                                             // Second station
@@ -543,49 +559,58 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                                                 // tarkista onko iteroitava lähtöasema ja onko se jo listassa
                                                 if(tempStation.getStationShortCode().equals(stationTrains.get(1).get(x0).timeTableRows.get(x1).getStationShortCode())  && !trackCoordinates.contains(new LatLng(Double.parseDouble(tempStation.getLatitude()),Double.parseDouble(tempStation.getLongitude()))))
                                                 {
-                                                    Log.d("asd", "FOUND FIRST STATION! " + tempStation.getStationShortCode());
+                                                    //Log.d("asd", "FOUND MID STATION! " + tempStation.getStationShortCode());
                                                     stationIsRelevant = true;
                                                     trackCoordinates.add(new LatLng(Double.parseDouble(tempStation.getLatitude()), Double.parseDouble(tempStation.getLongitude())));
                                                 }
                                                 // tarkista onko löytynyt jo käyttäjän lähtöasema ja onko koordinaatti jo listassa
-                                                  else if(stationIsRelevant && !trackCoordinates.contains(new LatLng(Double.parseDouble(tempStation.getLatitude()), Double.parseDouble(tempStation.getLongitude()))))
+                                                else if(stationIsRelevant && !trackCoordinates.contains(new LatLng(Double.parseDouble(tempStation.getLatitude()), Double.parseDouble(tempStation.getLongitude()))))
                                                 {
+                                                    // tarkista käydäänkö lähtöasemalla vaihtoaseman jälkeen, jolloin reitti on virheellinen
+                                                    if(tempStation.getStationShortCode().equals(ApplicationData.masterRoute.getOriginClosestStation().getStationShortCode()))
+                                                    {
+                                                        //Log.d("BREAKING", "Origin station was found on the way from middlestation to last station.");
+                                                        stationIsRelevant = false;
+                                                        break;
+                                                    }
                                                     //Log.d("asd", "FOUND RELEVANT STATION! " + tempStation.getStationShortCode());
                                                     trackCoordinates.add(new LatLng(Double.parseDouble(tempStation.getLatitude()), Double.parseDouble(tempStation.getLongitude())));
                                                 }
                                                 // tarkista onko koordinaatti käyttäjän pysäkin koordinaatti. Jos on, se on viimeinen ja looppi voidaan katkaista.
                                                 if(tempStation.getStationShortCode().equals(ApplicationData.masterRoute.getDestinationClosestStation().getStationShortCode()))
                                                 {
-                                                    Log.d("asd", "FOUND LAST STATION! " + tempStation.getStationShortCode());
+                                                    //Log.d("asd", "FOUND LAST STATION! " + tempStation.getStationShortCode());
                                                     break;
                                                 }
                                             }
 
-                                            // jos ei löydy lähtöasemaa listasta jostain syystä, skipataan fullrouten tekeminen
+                                            // jos ei löydy vaihtoasemaa listasta jostain syystä ennen kohdeasemaa, skipataan fullrouten tekeminen
                                             if(!stationIsRelevant)
                                             {
+                                               // Log.d("BREAKING", "route is not valid.");
                                                 break;
                                             }
 
 
                                             datetime = convertTime(stationTrains.get(1).get(x0).timeTableRows.get(x1).getScheduledTime());
-                                            station2.setDepTime(datetime[1]);
-                                            station2.setTrainType(stationTrains.get(1).get(x0).getTrainType());
-                                            station2.setTrainNumber(Integer.toString(stationTrains.get(1).get(x0).getTrainNumber()));
-                                            station2.setDepTrack(stationTrains.get(1).get(x0).timeTableRows.get(x1).getCommercialTrack());
-                                            station2.setOrigin(ApplicationData.stationData.GetLatLng(stationTrains.get(1).get(x0).timeTableRows.get(x1).getStationShortCode()));
-                                            station2.setOriginStationName(stationTrains.get(1).get(x0).timeTableRows.get(x1).getStationShortCode());
-                                            station2.setTrainTrackData(trackCoordinates);
-                                            station2.IsTrainSegment(true);
+                                            trainSegment2.setDepTime(datetime[1]);
+                                            trainSegment2.setArrDate(datetime[0]);
+                                            trainSegment2.setTrainType(stationTrains.get(1).get(x0).getTrainType());
+                                            trainSegment2.setTrainNumber(Integer.toString(stationTrains.get(1).get(x0).getTrainNumber()));
+                                            trainSegment2.setDepTrack(stationTrains.get(1).get(x0).timeTableRows.get(x1).getCommercialTrack());
+                                            trainSegment2.setOrigin(ApplicationData.stationData.GetLatLng(stationTrains.get(1).get(x0).timeTableRows.get(x1).getStationShortCode()));
+                                            trainSegment2.setOriginStationName(stationTrains.get(1).get(x0).timeTableRows.get(x1).getStationShortCode());
+                                            trainSegment2.setTrainTrackData(trackCoordinates);
+                                            trainSegment2.IsTrainSegment(true);
 
                                             // Instantly search for destination point data to create card
                                             int[] values = findDestinationTimeTable(1, x0);
                                             datetime = convertTime(stationTrains.get(values[0]).get(values[1]).timeTableRows.get(values[2]).getScheduledTime());
-                                            station2.setArrTime(datetime[1]);
-                                            station2.setArrTrack(stationTrains.get(values[0]).get(values[1]).timeTableRows.get(values[2]).getCommercialTrack());
-                                            station2.setDestination(ApplicationData.stationData.GetLatLng(stationTrains.get(values[0]).get(values[1]).timeTableRows.get(values[2]).getStationShortCode()));
-                                            station2.setDestinationStationName(stationTrains.get(values[0]).get(values[1]).timeTableRows.get(values[2]).getStationShortCode());
-                                            createIndirectFullRouteObjects(station1, station2);
+                                            trainSegment2.setArrTime(datetime[1]);
+                                            trainSegment2.setArrTrack(stationTrains.get(values[0]).get(values[1]).timeTableRows.get(values[2]).getCommercialTrack());
+                                            trainSegment2.setDestination(ApplicationData.stationData.GetLatLng(stationTrains.get(values[0]).get(values[1]).timeTableRows.get(values[2]).getStationShortCode()));
+                                            trainSegment2.setDestinationStationName(stationTrains.get(values[0]).get(values[1]).timeTableRows.get(values[2]).getStationShortCode());
+                                            createIndirectFullRouteObjects(trainSegment1, trainSegment2);
                                         }
                                     }
                                 }
@@ -593,15 +618,16 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                             // Tarkista origin vasta lopussa, ettei vertaa originasemaa.
                             if (stationTrains.get(0).get(i1).timeTableRows.get(i2).getStationShortCode().equals(ApplicationData.masterRoute.getOriginClosestStation().getStationShortCode())) {
                                 originFound = true;
+
                                 datetime = convertTime(stationTrains.get(0).get(i1).timeTableRows.get(i2).getScheduledTime());
-                                station1.setDepTime(datetime[1]);
-                                station1.setDepType(stationTrains.get(0).get(i1).getTrainType());
-                                station1.setTrainType(stationTrains.get(0).get(i1).getTrainType());
-                                station1.setTrainNumber(Integer.toString(stationTrains.get(0).get(i1).getTrainNumber()));
-                                station1.setDepTrack(stationTrains.get(0).get(i1).timeTableRows.get(i2).getCommercialTrack());
+                                trainSegment1.setDepTime(datetime[1]);
+                                trainSegment1.setDepType(stationTrains.get(0).get(i1).getTrainType());
+                                trainSegment1.setTrainType(stationTrains.get(0).get(i1).getTrainType());
+                                trainSegment1.setTrainNumber(Integer.toString(stationTrains.get(0).get(i1).getTrainNumber()));
+                                trainSegment1.setDepTrack(stationTrains.get(0).get(i1).timeTableRows.get(i2).getCommercialTrack());
                                 //station1.setDepType(stationTrains.get(0).get(i1).timeTableRows.get(i2).getType());
-                                station1.setOrigin(ApplicationData.stationData.GetLatLng(stationTrains.get(0).get(i1).timeTableRows.get(i2).getStationShortCode()));
-                                station1.setOriginStationName(stationTrains.get(0).get(i1).timeTableRows.get(i2).getStationShortCode());
+                                trainSegment1.setOrigin(ApplicationData.stationData.GetLatLng(stationTrains.get(0).get(i1).timeTableRows.get(i2).getStationShortCode()));
+                                trainSegment1.setOriginStationName(stationTrains.get(0).get(i1).timeTableRows.get(i2).getStationShortCode());
                             }
                         }
                     }
@@ -612,6 +638,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                 return null;
             }
         }.execute();
+
         }
         catch(Exception e)
         {
@@ -622,7 +649,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
 
 
 
-    private void createIndirectFullRouteObjects(routeSegment station1, routeSegment station2) {
+    private void createIndirectFullRouteObjects(routeSegment trainSegment1, routeSegment trainSegment2) {
         // Copy masterRoute and put copy into arraylist
         fullRoute route = new fullRoute(ApplicationData.masterRoute);
         String origin;
@@ -635,7 +662,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
             origin = "Current user location";
         }
 
-        Log.d("Called", "createIndirectFullRouteObjects");
+        //Log.d("Called", "createIndirectFullRouteObjects");
         // Manually made walking segment
         route.addRouteSegment();
         int iterator = route.routeSegmentList.size() - 1;
@@ -644,31 +671,20 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         route.routeSegmentList.get(iterator).setDestinationStationName(ApplicationData.masterRoute.getOriginClosestStation().getStationName());
         route.routeSegmentList.get(iterator).setOrigin(new LatLng(ApplicationData.masterRoute.getOriginLocation().getLatitude(), ApplicationData.masterRoute.getOriginLocation().getLongitude()));
         route.routeSegmentList.get(iterator).setDestination(new LatLng(Double.parseDouble(ApplicationData.masterRoute.getOriginClosestStation().getLatitude()),Double.parseDouble(ApplicationData.masterRoute.getOriginClosestStation().getLongitude())));
-        route.routeSegmentList.get(iterator).BuildPolylineOptions(getBaseContext());
-
-
+        route.routeSegmentList.get(iterator).BuildPolylineOptions(getApplicationContext());
 
         // Create first stop segment
-        route.addRouteSegment(station1);
+        route.addRouteSegment(new routeSegment(trainSegment1));
         iterator = route.routeSegmentList.size() - 1;
-        //route.routeSegmentList.get(iterator).setTrainTrackData(station1.getTrainTrackData());
-        //route.routeSegmentList.get(iterator).IsTrainSegment(true);
-        //route.routeSegmentList.get(iterator).setDepTime(station1.getDepTime());
-        route.setOriginDate(station1.getDepDate());
-        //route.routeSegmentList.get(iterator).setDepType(station1.getDepType());
-        //route.routeSegmentList.get(iterator).setDepTrack(station1.getDepTrack());
-        //route.routeSegmentList.get(iterator).setArrTrack(station1.getArrTrack());
-        //route.routeSegmentList.get(iterator).setArrTime(station1.getArrTime());
-        //route.routeSegmentList.get(iterator).setOrigin(station1.getOrigin());
-        //route.routeSegmentList.get(iterator).setDestination(station1.getDestination());
-        route.routeSegmentList.get(iterator).BuildPolylineOptions(getBaseContext());
+        route.setOriginDate(trainSegment1.getDepDate());
+        route.routeSegmentList.get(iterator).BuildPolylineOptions(getApplicationContext());
 
         // Create second stop segment
-        route.addRouteSegment(station2);
-        route.setDestinationDate(station2.getArrDate());
+        route.addRouteSegment(new routeSegment(trainSegment2));
+        route.setDestinationDate(trainSegment2.getArrDate());
         // TODO build polylines. can this be made inside route before adding?
         iterator = route.routeSegmentList.size() - 1;
-        route.routeSegmentList.get(iterator).BuildPolylineOptions(getBaseContext());
+        route.routeSegmentList.get(iterator).BuildPolylineOptions(getApplicationContext());
 
         // Create walking segment
         route.addRouteSegment();
@@ -678,11 +694,9 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         route.routeSegmentList.get(iterator).setDestinationStationName(ApplicationData.masterRoute.getDestinationAddress());
         route.routeSegmentList.get(iterator).setOrigin(new LatLng(Double.parseDouble(ApplicationData.masterRoute.getDestinationClosestStation().getLatitude()),Double.parseDouble(ApplicationData.masterRoute.getDestinationClosestStation().getLongitude())));
         route.routeSegmentList.get(iterator).setDestination(new LatLng(ApplicationData.masterRoute.getDestinationLocation().getLatitude(),ApplicationData.masterRoute.getDestinationLocation().getLongitude()));
-        route.routeSegmentList.get(iterator).BuildPolylineOptions(getBaseContext());
+        route.routeSegmentList.get(iterator).BuildPolylineOptions(getApplicationContext());
 
-        // Create fullRoute-object of found route
         fullRouteList.add(route);
-
     }
 
 
@@ -1178,7 +1192,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                     fullRouteList.get(iterator).routeSegmentList.get(0).setDepTime("Tässä minä kävelen juna-asemalle");
                     fullRouteList.get(iterator).routeSegmentList.get(0).setOrigin(new LatLng(ApplicationData.masterRoute.getOriginLocation().getLatitude(),ApplicationData.masterRoute.getOriginLocation().getLongitude()));
                     fullRouteList.get(iterator).routeSegmentList.get(0).setDestination(new LatLng(Double.parseDouble(ApplicationData.masterRoute.getOriginClosestStation().getLatitude()),Double.parseDouble(ApplicationData.masterRoute.getOriginClosestStation().getLongitude())));
-                    Log.d("createFullRouteObjects", "Building polylineoptions");
+                  //  Log.d("createFullRouteObjects", "Building polylineoptions");
                     fullRouteList.get(iterator).routeSegmentList.get(0).BuildPolylineOptions(getBaseContext());
                     Log.d("createFullRouteObjects ", "Tehdään junaetappia");
                     // Junatiedot
@@ -1193,7 +1207,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                     fullRouteList.get(iterator).routeSegmentList.get(1).setArrTrack(trainDataTimeTableArrival.get(index)[1]);
                     fullRouteList.get(iterator).routeSegmentList.get(1).setArrDate(trainDataTimeTableArrival.get(index)[2]);
                     fullRouteList.get(iterator).routeSegmentList.get(1).setArrTime(trainDataTimeTableArrival.get(index)[3]);
-                    Log.d("createFullRouteObjects", "Building polylineoptions for traintrip");
+                    //Log.d("createFullRouteObjects", "Building polylineoptions for traintrip");
                     fullRouteList.get(iterator).routeSegmentList.get(1).BuildPolylineOptions(getBaseContext());
                     Log.d("createFullRouteObjects", "Tehdään kävelyetappi 2");
                     // Kävele asemalta kohteeseen
@@ -1201,7 +1215,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                     fullRouteList.get(iterator).routeSegmentList.get(2).setArrTime("Tässä minä kävelen asemalta kohteeseen");
                     fullRouteList.get(iterator).routeSegmentList.get(2).setOrigin(new LatLng(Double.parseDouble(ApplicationData.masterRoute.getDestinationClosestStation().getLatitude()),Double.parseDouble(ApplicationData.masterRoute.getDestinationClosestStation().getLongitude())));
                     fullRouteList.get(iterator).routeSegmentList.get(2).setDestination(new LatLng(ApplicationData.masterRoute.getDestinationLocation().getLatitude(),ApplicationData.masterRoute.getDestinationLocation().getLongitude()));
-                    Log.d("createFullRouteObjects", "Building polylineoptions");
+                    //Log.d("createFullRouteObjects", "Building polylineoptions");
                     fullRouteList.get(iterator).routeSegmentList.get(2).BuildPolylineOptions(getBaseContext());
                 }
             }

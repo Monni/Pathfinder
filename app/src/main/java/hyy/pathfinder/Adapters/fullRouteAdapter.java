@@ -60,8 +60,8 @@ public class fullRouteAdapter extends RecyclerView.Adapter<fullRouteAdapter.View
         viewHolder.originDateTV.setText(fRoute.getOriginDate());
         viewHolder.originTimeTV.setText(fRoute.routeSegmentList.get(1).getDepTime());
         viewHolder.originClosestStationTV.setText(fRoute.getOriginClosestStation().getStationName());
-        viewHolder.destinationClosestStationTV.setText(fRoute.getDestinationClosestStation().getStationName());
-
+        viewHolder.destinationClosestStationTV.setText(fRoute.routeSegmentList.get(fRoute.routeSegmentList.size()-2).getArrTime() + " " + fRoute.getDestinationClosestStation().getStationName());
+        viewHolder.middleStationNameTV.setText(fRoute.routeSegmentList.get(1).getDestinationStationName());
 
     }
 
@@ -73,6 +73,7 @@ public class fullRouteAdapter extends RecyclerView.Adapter<fullRouteAdapter.View
         public TextView originTimeTV;
         public TextView originClosestStationTV;
         public TextView destinationClosestStationTV;
+        public TextView middleStationNameTV;
 
 
         public ViewHolder (View itemView) {
@@ -84,6 +85,7 @@ public class fullRouteAdapter extends RecyclerView.Adapter<fullRouteAdapter.View
             originTimeTV = (TextView) itemView.findViewById(R.id.originTimeTV);
             originClosestStationTV = (TextView) itemView.findViewById(R.id.originClosestStationTV);
             destinationClosestStationTV = (TextView) itemView.findViewById(R.id.destinationClosestStationTV);
+            middleStationNameTV = (TextView) itemView.findViewById(R.id.Vaihto);
             // add click listener for a card
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
