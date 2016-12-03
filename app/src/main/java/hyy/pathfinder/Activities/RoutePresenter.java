@@ -79,7 +79,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
     /** Siirrä kaikki muuttujat ApplicationDataan staattisiksi muuttujiksi joita tarvisee kuljettaa aktiviteetista toiseen*/
 
     // Timeformat used to general time conversion between device and Digitraffic
-    private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.ENGLISH);
+    private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
 
     //private List<String[]> trainData = new ArrayList<>();
     private List<routeSegment> trainData = new ArrayList<>();
@@ -730,6 +730,18 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
     }
 
 
+    // Mostly used to convert hh.mm.ss.xx.xxx to hh.mm. Returns original string if error happens
+    private String convertTimeToTimeFormat(String time) {
+        String data = time;
+        try {
+            data = timeFormat.parse(time).toString();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return data;
+    }
+
+
 
     private int[] findDestinationTimeTable(int i, int x0) {
         String stationShortCode;
@@ -927,7 +939,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         messageList.add("Lasketaan ratapalkkeja");
         messageList.add("Hölkätään jalkakäytävällä");
         messageList.add("Ihmetellään nähtävyyksiä");
-        messageList.add("apuva");
+        messageList.add("Siistitään katuja");
 
         Random random = new Random();
         int i = random.nextInt(messageList.size());
@@ -940,7 +952,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         String timeTemp[];
         String dateTemp[];
         String date = "";
-        String time = "";
+        String time;
         String returnDateTime[] = {"",""};
         // Split string "scheduledTime" into two different strings and convert to more user convenient format
         // Create StringBuilder and remove last letter ('Z' in json array)
@@ -959,7 +971,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
         // Convert time
         StringBuilder timeStringBuilder = new StringBuilder(timeTemp[1]);
         timeStringBuilder.delete(5, timeStringBuilder.length());
-        time = timeTemp[1];
+        time = timeStringBuilder.toString();
 
         returnDateTime[0] = date;
         returnDateTime[1] = time;

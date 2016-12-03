@@ -284,6 +284,7 @@ public class routeSegment implements Parcelable, RouterResponse {
         arrTime = in.readString();
         originStationName = in.readString();
         destinationStationName = in.readString();
+        isTrainSegment = in.readByte() != 0; // true if byte != 0
     }
 
     @Override
@@ -305,6 +306,7 @@ public class routeSegment implements Parcelable, RouterResponse {
         dest.writeString(arrTime);
         dest.writeString(originStationName);
         dest.writeString(destinationStationName);
+        dest.writeByte((byte) (isTrainSegment ? 1 : 0)); // if isTrainSegment == true, byte == 1
     }
 
     @SuppressWarnings("unused")
