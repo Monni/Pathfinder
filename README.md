@@ -31,3 +31,4 @@ TTOW0620 + TTOW0610 course project
 - 01.12 - 9h - Epäsuorien junareittien polylinet
 - 02.12 - 2h - Epäsuorien junareittien polylinet
 - 03.11 - 8h - Epäsuorien junareittien reitinhaku ja UI
+- 04.11 - 1h - Koodin siivous
