@@ -29,22 +29,22 @@ public class DataParser {
 
             jRoutes = jObject.getJSONArray("routes");
 
-            /** Traversing all routes */
+            // Traversing all routes
             for(int i=0;i<jRoutes.length();i++){
                 jLegs = ( (JSONObject)jRoutes.get(i)).getJSONArray("legs");
                 List path = new ArrayList<>();
 
-                /** Traversing all legs */
+                // Traversing all legs
                 for(int j=0;j<jLegs.length();j++){
                     jSteps = ( (JSONObject)jLegs.get(j)).getJSONArray("steps");
 
-                    /** Traversing all steps */
+                    // Traversing all steps
                     for(int k=0;k<jSteps.length();k++){
                         String polyline = "";
                         polyline = (String)((JSONObject)((JSONObject)jSteps.get(k)).get("polyline")).get("points");
                         List<LatLng> list = decodePoly(polyline);
 
-                        /** Traversing all points */
+                        // Traversing all points
                         for(int l=0;l<list.size();l++){
                             HashMap<String, String> hm = new HashMap<>();
                             hm.put("lat", Double.toString((list.get(l)).latitude) );
@@ -100,58 +100,6 @@ public class DataParser {
 
         return list;
     }
-/*
-    public Route parseJsonToRoute(JSONObject jObject) throws JSONException
-    {
-        JSONArray jaRoutes;
-        JSONArray jaLegs;
-        JSONObject oLegs;
-        JSONObject jDistance;
-        JSONObject jDuration;
-        JSONObject jEndLocation;
-        JSONObject jStartLocation;
-        LatLng originLatLng;
-        LatLng destinationLatLng;
-        double endLocationLat;
-        double endLocationLng;
-        String endAddress;
-        double startLocationLat;
-        double startLocationLng;
-        String startAddress;
-
-        jaRoutes = jObject.getJSONArray("routes");
-
-        // get legs array
-        jaLegs =  jaRoutes.getJSONObject(0).getJSONArray("legs");
-        // get first object inside the array
-        oLegs = jaLegs.getJSONObject(0);
-
-        // get relevant data from legs-object
-        jDistance = oLegs.getJSONObject("distance");
-        Integer distance = jDistance.getInt("value");
-        jDuration = oLegs.getJSONObject("duration");
-        Integer duration = jDuration.getInt("value");
-
-        jEndLocation = oLegs.getJSONObject("end_location");
-        jStartLocation = oLegs.getJSONObject("start_location");
-
-        endAddress = oLegs.getString("end_address");
-        startAddress = oLegs.getString("start_address");
-
-        endLocationLat = jEndLocation.getDouble("lat");
-        endLocationLng = jEndLocation.getDouble("lng");
-        startLocationLat = jStartLocation.getDouble("lat");
-        startLocationLng = jStartLocation.getDouble("lng");
-
-        destinationLatLng = new LatLng(endLocationLat, endLocationLng);
-        originLatLng = new LatLng(startLocationLat, startLocationLng);
-
-        Route route = new Route(originLatLng, destinationLatLng, startAddress, endAddress, distance, duration);
-        return route;
-    }
-
-*/
-
 
     /**
      * Method to decode polyline points

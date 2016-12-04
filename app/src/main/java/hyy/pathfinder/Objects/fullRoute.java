@@ -65,7 +65,6 @@ public class fullRoute implements Parcelable {
         this.duration = masterRoute.getDuration();
         this.distance = masterRoute.getDistance();
         this.polylineOptions = masterRoute.getPolylineOptions();
-        //  this.routeSegmentList = new ArrayList<>();
         this.originDate = masterRoute.getOriginDate();
         this.originTime = masterRoute.getOriginTime();
     }

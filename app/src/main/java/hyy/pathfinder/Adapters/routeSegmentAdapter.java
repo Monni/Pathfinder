@@ -108,7 +108,6 @@ public class routeSegmentAdapter extends RecyclerView.Adapter<routeSegmentAdapte
         public ViewHolder (View itemView) {
             super (itemView);
             // get layout IDs
-            //    kenttaImageView = (ImageView) itemView.findViewById(R.id.kenttaImageView);
             depDateTextView = (TextView) itemView.findViewById(R.id.depDateTextView);
             depTimeTextView = (TextView) itemView.findViewById(R.id.depTimeTextView);
             trainNumberTextView = (TextView) itemView.findViewById(R.id.trainNumberTextView);
@@ -130,13 +129,9 @@ public class routeSegmentAdapter extends RecyclerView.Adapter<routeSegmentAdapte
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    int position = getAdapterPosition();
-                    Toast.makeText(context, "Halp!", Toast.LENGTH_SHORT).show();
-                    //routeSegmentList.get(position).DrawSegmentInMap();
-                    ApplicationData.mMap.clear();
-                    ApplicationData.selectedRoute.routeSegmentList.get(position).DrawSegmentInMap();
-
-
+                int position = getAdapterPosition();
+                ApplicationData.mMap.clear();
+                ApplicationData.selectedRoute.routeSegmentList.get(position).DrawSegmentInMap();
                 }
             });
         }

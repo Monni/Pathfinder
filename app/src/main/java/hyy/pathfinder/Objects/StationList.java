@@ -16,7 +16,6 @@ public class StationList extends ArrayList<Station>
     {
         for(int i = 0;i<this.size();i++)
         {
-           // Log.d("StationList", "comparing " + this.get(i).getStationShortCode() + " and " + shortCode);
             if(this.get(i).getStationShortCode().equals(shortCode))
             {
                 return new LatLng(Double.parseDouble(this.get(i).getLatitude()),Double.parseDouble(this.get(i).getLongitude()));

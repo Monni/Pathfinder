@@ -39,7 +39,7 @@ public class routeSegment implements Parcelable, RouterResponse {
     private LatLng destination;
     private PolylineOptions polylineOptions;
     private Boolean isTrainSegment;
-    private List<LatLng> trainTrackData; // TODO: parempi nimi tälle? sisältää juna-asemat joidenka läpi juna kulkee.
+    private List<LatLng> trainTrackData;
     private String originStationName;
     private String destinationStationName;
 
@@ -257,15 +257,14 @@ public class routeSegment implements Parcelable, RouterResponse {
         {
             String originString = String.valueOf(origin.latitude) + "," + String.valueOf(origin.longitude);
             String destinationString = String.valueOf(destination.latitude) + "," + String.valueOf(destination.longitude);
-            //Router router = new Router();
-           // router.GetPolylineOptions(originString, destinationString, Context, this);
+            Router router = new Router();
+            router.GetPolylineOptions(originString, destinationString, Context, this);
         }
     }
 
     @Override
     public void PolylineOptionsFinished(PolylineOptions options)
     {
-        Log.d("PolylineOptionsFinished","Setting polylineoptions for routeSegment");
         polylineOptions = options;
     }
 

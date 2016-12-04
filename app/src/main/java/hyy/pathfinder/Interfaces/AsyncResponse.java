@@ -11,8 +11,5 @@ import org.json.JSONArray;
 
 public interface AsyncResponse
 {
-   // void getWalkingRouteFinish(Route route);
-    //void getTotalDistanceAndDurationFinish(Route route);
     void onAsyncJsonFetcherComplete(int mode, JSONArray json, boolean jsonException);
-    //void getBusRouteFinish(Route route);
 }

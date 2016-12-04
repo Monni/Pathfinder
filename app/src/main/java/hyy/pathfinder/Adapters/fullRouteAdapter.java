@@ -51,24 +51,18 @@ public class fullRouteAdapter extends RecyclerView.Adapter<fullRouteAdapter.View
     // replace the contents of the view with that element
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, int position) {
+
         fullRoute fRoute = fullRouteList.get(position);
-      /*  Glide.with(this.context)
-                .load("KUVA")
-                .override(250,170)
-                .into(viewHolder.kenttaImageView);
-*/
         viewHolder.originDateTV.setText(fRoute.getOriginDate());
         viewHolder.originTimeTV.setText(fRoute.routeSegmentList.get(1).getDepTime());
         viewHolder.originClosestStationTV.setText(fRoute.getOriginClosestStation().getStationName());
         viewHolder.destinationClosestStationTV.setText(fRoute.routeSegmentList.get(fRoute.routeSegmentList.size()-2).getArrTime() + " " + fRoute.getDestinationClosestStation().getStationName());
         viewHolder.middleStationNameTV.setText(fRoute.routeSegmentList.get(1).getDestinationStationName());
-
     }
 
     // view holder class to specify card UI objects
     public class ViewHolder extends RecyclerView.ViewHolder {
         // each data item is just a string in this case
-        // public ImageView kenttaImageView;
         public TextView originDateTV;
         public TextView originTimeTV;
         public TextView originClosestStationTV;
@@ -78,9 +72,8 @@ public class fullRouteAdapter extends RecyclerView.Adapter<fullRouteAdapter.View
 
         public ViewHolder (View itemView) {
             super (itemView);
-            // get layout IDs
-            //    kenttaImageView = (ImageView) itemView.findViewById(R.id.kenttaImageView);
 
+            // get layout IDs
             originDateTV = (TextView) itemView.findViewById(R.id.originDateTV);
             originTimeTV = (TextView) itemView.findViewById(R.id.originTimeTV);
             originClosestStationTV = (TextView) itemView.findViewById(R.id.originClosestStationTV);

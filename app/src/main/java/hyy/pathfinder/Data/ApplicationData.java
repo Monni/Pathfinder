@@ -31,8 +31,6 @@ import hyy.pathfinder.Objects.fullRoute;
 
 public class ApplicationData extends Application
 {
-    // ALUSTA TÄNNE TARPEELLISET MUUTTUJAT. HUOM STATIC KEYWORD
-
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
     public static GoogleApiClient mGoogleApiClient;
     public static Context mContext;
@@ -42,22 +40,18 @@ public class ApplicationData extends Application
     public static ApplicationDataCallbacks applicationDataCallbacks;
     public static GoogleMap mMap;
     public static boolean deviceLocationIsOrigin;
-    public static StationList stationData = new StationList(); // get info from current stations. Name, shortCode, latitude and longitude
+    public static StationList stationData = new StationList();
     public static AppBarLayout routePresenterAppBar;
     public static fullRoute selectedRoute;
-   // public static List<fullRoute> fullRouteList;
     public static fullRoute masterRoute;
     public static Marker mMarker;
     // Pitää ajaa getApplicationContext(), setApplicationDataCallbacks(), setApplicationDataCallbacksDelegate, setLocationListener(), buildGoogleApiClient ja viimeisenä createLocationRequest() (järjestys oleellinen, nullpointerit herkässä)
     // Tämän luokan onCreatessa homma ei toimi, koska luokasta ei koskaan tehdä insanssia - sen toimintoja käytetään vain staattisten funktioiden ja muuttujien kautta.
     // Aina kun siirrytään uuteen aktiviteettiin täytyy asettaa se aktiviteetti delegaatiksi jolle interface paiskaa vastuun callbackista, pysäyttää edellisen mGoogleApiClientin updatet ja luoda uusi googleApiClient uudelle aktiviteetille
 
-    // TODO: kun painetaan back nappulaa ja siirrytään aktiviteeteissa taaksepäin, niin delegaatti pitää uudelleenasettaa jotenkin edeltävään aktiviteettiin ja googleapiclient uusia. Voisiko onBackPressed callbackia hyödyntää?
-
 
     public static void setApplicationDataCallbacks()
     {
-
         Log.d("ApplicationData", "setApplicationDataCallbacks");
         applicationDataCallbacks = new ApplicationDataCallbacks();
     }
@@ -65,7 +59,6 @@ public class ApplicationData extends Application
 
     public static void setLocationListener()
     {
-
         Log.d("ApplicationData", "setLocationListener");
         ApplicationData.locationListener = new LocationListener() {
             @Override
@@ -84,7 +77,6 @@ public class ApplicationData extends Application
 
     public static void startLocationUpdates(Activity activity)
     {
-
         Log.d("ApplicationData", "startLocationUpdates");
         if(checkLocationPermission(activity)) {
 
@@ -108,7 +100,6 @@ public class ApplicationData extends Application
             mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
         }
     }
-
 
     public static boolean checkLocationPermission(Activity activity){
         if (ContextCompat.checkSelfPermission(activity,
