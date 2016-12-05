@@ -178,7 +178,7 @@ public class RoutePresenter extends AppCompatActivity implements AsyncResponse, 
                     scrollRange = appBarLayout.getTotalScrollRange();
                 }
                 if (scrollRange + verticalOffset == 0) {
-                    collapsingToolbarLayout.setTitle("Select preferred route");
+                    collapsingToolbarLayout.setTitle("Valitse mieleisesi reitti");
                     isShow = true;
                 } else if(isShow) {
                     collapsingToolbarLayout.setTitle(" ");//careful there should a space between double quote otherwise it wont work

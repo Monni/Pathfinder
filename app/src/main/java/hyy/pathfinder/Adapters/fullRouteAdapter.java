@@ -57,7 +57,7 @@ public class fullRouteAdapter extends RecyclerView.Adapter<fullRouteAdapter.View
         viewHolder.originTimeTV.setText(fRoute.routeSegmentList.get(1).getDepTime());
         viewHolder.originClosestStationTV.setText(fRoute.getOriginClosestStation().getStationName());
         viewHolder.destinationClosestStationTV.setText(fRoute.routeSegmentList.get(fRoute.routeSegmentList.size()-2).getArrTime() + " " + fRoute.getDestinationClosestStation().getStationName());
-        viewHolder.middleStationNameTV.setText(ApplicationData.StationData.getStationName(fRoute.routeSegmentList.get(1).getDestinationStationName()));
+        viewHolder.middleStationNameTV.setText(ApplicationData.stationData.getStationName(fRoute.routeSegmentList.get(1).getDestinationStationName()));
     }
 
     // view holder class to specify card UI objects
